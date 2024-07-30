@@ -1,0 +1,22 @@
+[package]
+name = "binaries"
+version = "0.0.1"
+edition = "2021"
+
+[workspace]
+members = ["creates/binaries_ui"]
+
+[workspace.dependencies]
+bevy = "0.14.0-rc.4" 
+bevy_vector_shapes = "0.8.0"
+taffy = "0.5.2"
+
+[dev-dependencies]
+bevy = "0.14.0-rc.4" 
+bevy_vector_shapes = "0.8.0"
+binaries_ui = { path = "creates/binaries_ui" }
+
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
