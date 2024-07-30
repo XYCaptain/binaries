@@ -20,13 +20,15 @@ pub struct Button {
     pub position: Vec2,
     pub entity: Option<Box<dyn UIElement>>,
 }
+
 #[derive(Clone)]
 pub struct SDButton{
     tile: String,
     color: Srgba,
     size: Vec2,
     state: UIMouse,
-    pub position: Vec3,
+    position: Vec3,
+    isready: bool,
 }
 
 impl SDButton {
@@ -36,7 +38,8 @@ impl SDButton {
             color: SEA_GREEN,
             size: Vec2::new(10.0, 10.0),
             position: Vec3::new(0.0, 0.0,0.0),
-            state: UIMouse::Release
+            state: UIMouse::Release,
+            isready: false,
         }
     }
 
@@ -106,6 +109,14 @@ impl UIElement for SDButton {
         (self.size.x, self.size.y)
     }
     
+    fn isready(&self) -> bool {
+        self.isready
+    }
+
+    fn setready(&mut self) {
+        self.isready = true;
+    }
+
     fn update(
         &mut self,
         cursor: (f32, f32),

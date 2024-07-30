@@ -87,8 +87,13 @@ impl SDUILayouts {
         }
     }
 
-    pub fn draw(&self, painter: &mut ShapePainter) {
-        for (_, element) in self.hash_elements.iter() {
+    pub fn draw(&mut self, painter: &mut ShapePainter) {
+        for (nodeid, element) in self.hash_elements.iter_mut() {
+            if !element.isready() {
+                let layout = self.taffy.layout(*nodeid).expect("布局错误");
+                element.update((-100.,-100.), painter, layout);
+                element.setready();
+            }
             element.draw(painter);
         }
     }

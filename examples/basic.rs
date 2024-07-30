@@ -24,7 +24,10 @@ fn main() {
         .add_plugins(Shape2dPlugin::default())
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
-        .add_systems(Startup, (layout_setup.before(ui_setup),ui_setup,setup.after(ui_setup)))
+        .add_systems(Startup, (
+            layout_setup.before(ui_setup),
+            ui_setup,
+            setup.after(ui_setup)))
         .add_systems(Update, draw_gallery)
         .run();
 }
@@ -84,6 +87,6 @@ fn ui_setup(
         button().color(BLUE).size(Vec2::new(50., 100.)),
         button().color(BLUE).size(Vec2::new(50., 100.))
     )).push_to_layout(&mut layouts);
+
+    
 }
-
-

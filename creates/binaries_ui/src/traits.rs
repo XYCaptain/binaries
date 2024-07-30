@@ -13,6 +13,12 @@ pub trait UIElement: Sync + Send {
         }
     }
 
+    fn isready(&self) -> bool {
+        false
+    }
+
+    fn setready(&mut self);
+
     fn update(&mut self, cursor: (f32, f32),painter: &mut ShapePainter, layout: &Layout);
 }
 
