@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bevy::color::palettes::css::{
-    BLUE, DIM_GRAY, RED, SEA_GREEN,
+    BLUE, DIM_GRAY, RED, SEA_GREEN, YELLOW,
 };
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
@@ -9,7 +9,8 @@ use bevy::window::PrimaryWindow;
 use bevy::winit::WinitSettings;
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::Shape2dPlugin;
-use binaries_ui::layout::SDUILayouts;
+use binaries_ui::input::print_mouse_events_system;
+use binaries_ui::layout::{Context, SDUILayouts};
 use binaries_ui::components::{button, stack::*};
 
 fn main() {
@@ -20,6 +21,7 @@ fn main() {
         })
         .insert_resource(ClearColor(DIM_GRAY.into()))
         .add_plugins(DefaultPlugins)
+        .insert_resource(Context::default())
         .insert_resource(SDUILayouts::new())
         .add_plugins(Shape2dPlugin::default())
         .add_plugins(LogDiagnosticsPlugin::default())
@@ -28,7 +30,7 @@ fn main() {
             layout_setup.before(ui_setup),
             ui_setup,
             setup.after(ui_setup)))
-        .add_systems(Update, draw_gallery)
+        .add_systems(Update, print_mouse_events_system)
         .run();
 }
 
@@ -53,21 +55,6 @@ fn setup(
         });
 }
 
-fn draw_gallery(
-    mut painter: ShapePainter,
-    mut layouts: ResMut<SDUILayouts>,
-    mut cursor_moved_events: EventReader<CursorMoved>,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-) {
-    let window = window_query.get_single().unwrap();
-    painter.origin = Some(Vec3::new(-window.width() * 0.5, window.height() * 0.5, 0.));
-
-    for event in cursor_moved_events.read() {
-        layouts.update((event.position.x, event.position.y), &mut painter);
-    }
-    layouts.draw(&mut painter);
-}
-
 fn layout_setup(
     mut painter: ShapePainter,
     mut layouts: ResMut<SDUILayouts>,
@@ -82,11 +69,9 @@ fn ui_setup(
     mut layouts: ResMut<SDUILayouts>,
 ) {
     stack((
-        button().color(RED).size(Vec2::new(20., 100.)),
-        button().color(SEA_GREEN).size(Vec2::new(30., 100.)),
-        button().color(BLUE).size(Vec2::new(50., 100.)),
-        button().color(BLUE).size(Vec2::new(50., 100.))
+        button(|_|{ println!("1");}).color(RED).size(Vec2::new(100., 41.8)),
+        button(|_|{ println!("2");}).color(SEA_GREEN).size(Vec2::new(100., 41.8)).margin(Vec4::splat(10.)).round(5.),
+        button(|_|{ println!("3");}).color(BLUE).size(Vec2::new(100., 41.8)),
+        button(|_|{ println!("4");}).color(YELLOW).size(Vec2::new(100., 41.8))
     )).push_to_layout(&mut layouts);
-
-    
 }
