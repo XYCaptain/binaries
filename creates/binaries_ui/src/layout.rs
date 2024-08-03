@@ -1,9 +1,9 @@
 use std::{collections::HashMap, sync::{Arc, RwLock}};
 
-use bevy::prelude::Resource;
+use bevy::{math::Vec3, prelude::Resource};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{
-    prelude::TaffyMaxContent, Dimension, JustifyContent, NodeId, Size, Style, TaffyTree,
+    prelude::TaffyMaxContent, Dimension, JustifyContent, NodeId, Size, Style, TaffyTree, TraversePartialTree
 };
 
 use crate::components::UIMouse;
@@ -79,44 +79,68 @@ impl SDUILayouts {
             .new_leaf(element.style()).unwrap();
         self.taffy.add_child(id, child).unwrap();
         self.hash_elements.insert(child, element);
-        self.taffy.compute_layout(self.root, Size::MAX_CONTENT).expect("msg");
+        self.taffy.compute_layout(
+            self.root,
+            Size::MAX_CONTENT
+        ).expect("msg");
         child
     }
 
     pub fn init(&mut self, painter: &mut ShapePainter) {
-        for (nodeid, element) in self.hash_elements.iter_mut() {
-            let layout = self.taffy.layout(*nodeid).expect("布局错误");
-            println!("{:?}", layout);
-            element.update((-100.,-100.), painter, layout);
-        }
+        self.traverse_init(self.root,painter,Vec3::new(0.,0.,0.), (-100.,-100.));
     }
 
     pub fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter) {
-        for (nodeid, element) in self.hash_elements.iter_mut() {
-            let layout = self.taffy.layout(*nodeid).expect("布局错误");
-            element.update(cursor, painter, layout);
-        }
+        self.traverse_update(self.root,painter,Vec3::new(0.,0.,0.), cursor);
     }
 
     pub fn draw(&mut self, painter: &mut ShapePainter) {
-        let mut list = Vec::new();
-        for (nodeid, element) in self.hash_elements.iter_mut() {
-            if !element.is_ready() {
-                let layout = self.taffy.layout(*nodeid).expect("布局错误");
-                element.update((-100.,-100.), painter, layout);
-                element.set_ready();
-                println!("{:?}", layout);
-            }
-            list.push((element.z_order(),nodeid.clone()));
-            element.draw(painter);
-        }
-
-        list.sort_by(|a,b| a.0.cmp(&b.0));
-        for (_,element) in list.iter() {
-            self.hash_elements.get_mut(element).unwrap().draw(painter);
-        }
+        self.traverse_draw(self.root,painter,Vec3::new(0.,0.,0.));
     }
 
+    //TODO: needed to optimize
+    fn traverse_init(&mut self, node: NodeId,painter: &mut ShapePainter, mut org:Vec3, cursor: (f32, f32)) {
+        let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
+        for child in children.iter() {
+            let layout = self.taffy.layout(*child).expect("布局错误");
+            let element = self.hash_elements.get_mut(child).unwrap();
+            
+            element.update(cursor, painter, layout, org);
+
+            org = Vec3::new(layout.location.x,layout.location.y,0.) + org;
+            self.traverse_init(*child, painter, org, cursor);
+        }
+    }
+    
+    //TODO: needed to optimize
+    fn traverse_update(&mut self, node: NodeId,painter: &mut ShapePainter, mut org:Vec3, cursor: (f32, f32)) {
+        let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
+        for child in children.iter() {
+            let layout = self.taffy.layout(*child).expect("布局错误");
+            let element = self.hash_elements.get_mut(child).unwrap();
+            
+            element.update(cursor, painter, layout, org);
+            
+            org = Vec3::new(layout.location.x,layout.location.y,0.) + org;
+            self.traverse_update(*child, painter, org, cursor);
+        }
+    }
+    
+    //TODO: needed to optimize
+    fn traverse_draw(&mut self, node: NodeId,painter: &mut ShapePainter, mut org:Vec3) {
+        let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
+        for child in children.iter() {
+            let layout = self.taffy.layout(*child).expect("布局错误");
+            let element = self.hash_elements.get_mut(child).unwrap();
+            
+            element.update((-100.,-100.), painter, layout,org);
+            
+            org = Vec3::new(layout.location.x,layout.location.y,0.) + org;
+            element.draw(painter);
+            self.traverse_draw(*child, painter, org);
+        }
+    }
+    
     pub fn print_tree(&mut self) {
         self.taffy.print_tree(self.root);
     }

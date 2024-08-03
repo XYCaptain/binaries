@@ -65,6 +65,7 @@ pub fn print_mouse_events_system(
     // for event in double_tap_gesture_events.read() {
     //     // layouts.update_input_state(UIMouse::Click);
     // }
+
     layouts.draw(&mut painter);
 
     for element in layouts.iter() {

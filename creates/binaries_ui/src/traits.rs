@@ -1,3 +1,4 @@
+use bevy::math::Vec3;
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{Dimension, Layout, Size, Style};
 
@@ -21,17 +22,18 @@ pub trait UIElement: Sync + Send {
 
     fn set_ready(&mut self);
 
-    fn update(&mut self, cursor: (f32, f32),painter: &mut ShapePainter, layout: &Layout);
+    fn update(&mut self, cursor: (f32, f32),painter: &mut ShapePainter, layout: &Layout,org:Vec3);
 
     fn update_input_state(&mut self, state: UIMouse);
     
     fn exc(&mut self, ctx:&mut Context);
 
-    fn z_order(&self) -> i32 {
-        0
-    }
+    fn z_order(&self) -> i32 {0}
 
     fn set_z_order(&mut self,z_order:i32) -> i32;
+
+    fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>>;
+
 }
 
 pub trait UILayout {

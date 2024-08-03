@@ -8,7 +8,7 @@ use taffy::{prelude::length, Dimension, Rect, Size, Style};
 
 use super::UIMouse;
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct Element<F> {
     zorder: i32,
     tile: String,
@@ -23,7 +23,7 @@ pub struct Element<F> {
     action: Option<F>,
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 struct Shape {
     pub round: Vec4,
 }
@@ -36,7 +36,7 @@ where
         Self {
             tile: "Button".to_string(),
             color: SEA_GREEN,
-            size: Vec2::new(10.0, 10.0),
+            size: Vec2::new(0.0, 0.0),
             position: Vec3::new(0.0, 0.0, 0.0),
             state: UIMouse::Release,
             isready: false,
@@ -172,16 +172,22 @@ where
         self.isready = true;
     }
 
-    fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter, layout: &taffy::Layout) {
+    fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter, layout: &taffy::Layout, org:Vec3) {
+
         self.position = bevy::prelude::Vec3::new(
-            painter.origin.unwrap().x + layout.location.x + self.size.x / 2.,
-            painter.origin.unwrap().y - self.size.y / 2. - layout.location.y,
+            painter.origin.unwrap().x + layout.location.x + self.size.x / 2. + org.x,
+            painter.origin.unwrap().y - self.size.y / 2. - layout.location.y + org.y,
             0.,
         );
+
         let curo_screen = Vec2::new(
             cursor.0 + painter.origin.unwrap().x,
             cursor.1 - painter.origin.unwrap().y,
         );
+
+        if cursor.0 < 0.{
+            return;
+        }
 
         if self.insection(curo_screen) {
             self.state = UIMouse::Hover;
@@ -208,9 +214,17 @@ where
 
     fn exc(&mut self, context: &mut Context) {
         match self.state {
-            UIMouse::Hover => {}
+            UIMouse::Hover => {
+            }
             UIMouse::Click => {
-                self.action.as_ref().unwrap()(context);
+                match self.action.as_ref() {
+                    Some(action) => {
+                        action(context);
+                    }
+                    None => {
+                        println!("{} no action",self.tile);
+                    }
+                }
                 self.state = UIMouse::Release;
             }
             UIMouse::Release => {}
@@ -226,5 +240,9 @@ where
     fn set_z_order(&mut self,z_order:i32) -> i32 {
         self.zorder = z_order;
         self.zorder
+    }
+    
+    fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>> {
+        None
     }
 }

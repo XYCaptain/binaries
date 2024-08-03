@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use bevy::color::palettes::css::{BLUE, DIM_GRAY, RED, YELLOW};
+use bevy::color::palettes::css::{BLUE, BROWN, DIM_GRAY, GREEN, RED, YELLOW};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -69,12 +69,39 @@ fn layout_setup(
 fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
     stack(
         (
-            button(|_: &mut Context| {println!("1")}).size(Vec2::new(100., 100.)).color(BLUE),
-            button(|_: &mut Context| {println!("2")}).size(Vec2::new(100., 100.)).color(RED),
+            stack(
+                (
+                    button(|_: &mut Context| println!("1"))
+                        .size(Vec2::new(100., 100.))
+                        .color(BLUE),
+                    button(|_: &mut Context| println!("2"))
+                        .size(Vec2::new(100., 100.))
+                        .color(RED),
+                ),
+                |_: &mut Context| println!("3"),
+            )
+            .size(Vec2::new(300., 200.))
+            .color(Srgba::new(1.0, 0.0, 1.0, 0.8))
+            .tile("stack1"),
+            stack(
+                (
+                    button(|_: &mut Context| println!("4"))
+                        .size(Vec2::new(100., 100.))
+                        .color(GREEN),
+                    button(|_: &mut Context| println!("5"))
+                        .size(Vec2::new(100., 100.))
+                        .color(BROWN),
+                ),
+                |_: &mut Context| println!("6"),
+            )
+            .size(Vec2::new(300., 200.))
+            .color(Srgba::new(1.0, 1.0, 0.0, 0.8))
+            .tile("stack2"),
         ),
-        |_: &mut Context| {println!("3")},
+        |_: &mut Context| println!("6"),
     )
-    .size(Vec2::new(2000., 200.))
-    .color(Srgba::new(1.0, 1.0, 1.0, 0.0))  
+    .tile("stack3")
+    .size(Vec2::new(1500., 200.))
+    .color(Srgba::new(0.0, 1.0, 1.0, 1.0))
     .push_to_layout(&mut layouts);
 }

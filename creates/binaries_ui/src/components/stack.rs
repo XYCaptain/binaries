@@ -1,10 +1,10 @@
 use crate::layout::SDUILayouts;
 use bevy::color::Srgba;
-use bevy::math::{Vec2, Vec4};
+use bevy::math::{Vec2, Vec3};
 use bevy::utils::all_tuples;
 
 use super::element::Element;
-use super::{button, UIMouse};
+use super::UIMouse;
 use crate::{layout::Context, traits::UIElement};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::Style;
@@ -14,7 +14,7 @@ where
     K: ElementTuple,
     F: Fn(&mut Context) + Send + Sync + 'static,
 {
-    Stack::new(children).element(button(action))
+    Stack::new(children).action(action)
 }
 
 pub trait ElementTuple {
@@ -47,11 +47,6 @@ where
         }
     }
 
-    pub fn element(mut self, element: Element<F>) -> Self {
-        self.element = element;
-        self
-    }
-
     pub fn size(mut self,size:Vec2) -> Self {
         self.element =  self.element.size(size);
         self
@@ -62,13 +57,42 @@ where
         self
     }
 
+    pub fn tile(mut self,tile:&str) -> Self {
+        self.element =  self.element.tile(tile.to_string());
+        self
+    }
+
+    pub fn action(mut self,action:F) -> Self {
+        self.element =  self.element.action(Some(action));
+        self
+    }
+
     pub fn push_to_layout(mut self, layout: &mut SDUILayouts) {
-        let zorder =  self.element.set_z_order(0);
+        let mut zorder =  self.element.set_z_order(0);
         let node_id = layout.push_element(Box::new(self.element));
-        self.children.foreach_view(&mut |mut element| {
-            element.set_z_order(zorder+1);
-            layout.push_element_with_id(element, node_id);
+        let mut children = Vec::new();
+        self.children.foreach_view(&mut |element| {
+            children.push((node_id,element));
         });
+
+        while !children.is_empty() {
+            zorder = zorder + 1;
+            let mut new_children = Vec::new();
+            let mut new_pairs = Vec::new();
+            for  (p_id,mut child) in children {
+                child.set_z_order(zorder);
+                if child.get_children().is_some() {
+                    for grand_child in child.get_children().unwrap() {
+                        new_children.push(grand_child);
+                    }
+                }
+                let id = layout.push_element_with_id(child, p_id);
+                for grand_child in new_children.drain(..) {
+                    new_pairs.push((id,grand_child));
+                }
+            }
+            children = new_pairs;
+        }
     }
 }
 
@@ -98,9 +122,8 @@ where
         self.element.set_ready();
     }
 
-    fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter, layout: &taffy::Layout) {
-        self.element
-            .update(cursor, painter, layout);
+    fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter, layout: &taffy::Layout, org: Vec3) {
+        self.element.update(cursor, painter, layout,org);
     }
 
     fn update_input_state(&mut self, state: UIMouse) {
@@ -118,6 +141,14 @@ where
     fn set_z_order(&mut self, z_order: i32) -> i32{
         self.element.set_z_order(z_order);
         self.z_order()
+    }
+    
+    fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>> {
+        let mut children = Vec::new();
+        self.children.foreach_view(&mut |child| {
+            children.push(child);
+        });
+        children.into()
     }
 }
 
@@ -144,6 +175,7 @@ all_tuples!(impl_view_tuples, 0, 128, T);
 mod tests {
 
     use super::*;
+    use crate::components::button;
 
     #[test]
     fn test_button() {
