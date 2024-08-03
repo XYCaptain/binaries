@@ -91,6 +91,8 @@ impl SDUILayouts {
     }
 
     pub fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter) {
+        println!("==============================");
+        
         self.traverse_update(self.root,painter,Vec3::new(0.,0.,0.), cursor);
     }
 
@@ -120,7 +122,7 @@ impl SDUILayouts {
             let element = self.hash_elements.get_mut(child).unwrap();
             
             element.update(cursor, painter, layout, origin);
-            
+            println!("layout: {:?} {:?}", layout.location,origin);
             let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
             self.traverse_update(*child, painter, origin_new, cursor);
         }

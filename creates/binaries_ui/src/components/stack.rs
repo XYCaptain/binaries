@@ -8,6 +8,7 @@ use super::UIMouse;
 use crate::{layout::Context, traits::UIElement};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::Style;
+use crate::components::element::FlexDirection;
 
 pub fn stack<K,F>(children: K,action: F) -> Stack<K,F>
 where
@@ -23,6 +24,8 @@ pub trait ElementTuple {
         false
     }
 }
+
+
 
 #[derive(Clone)]
 pub struct Stack<K,F>
@@ -57,13 +60,18 @@ where
         self
     }
 
-    pub fn tile(mut self,tile:&str) -> Self {
+    pub fn title(mut self,tile:&str) -> Self {
         self.element =  self.element.tile(tile.to_string());
         self
     }
 
     pub fn action(mut self,action:F) -> Self {
         self.element =  self.element.action(Some(action));
+        self
+    }
+
+    pub fn direction(mut self, direction:FlexDirection) -> Self {
+        self.element = self.element.direction(direction);
         self
     }
 

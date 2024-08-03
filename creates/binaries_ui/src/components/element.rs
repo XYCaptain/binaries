@@ -9,6 +9,14 @@ use taffy::{prelude::length, Dimension, Rect, Size, Style};
 use super::UIMouse;
 
 #[derive(Clone,Debug)]
+pub enum FlexDirection {
+    Row,
+    Column,
+    RowReverse,
+    ColumnReverse,
+}
+
+#[derive(Clone,Debug)]
 pub struct Element<F> {
     zorder: i32,
     tile: String,
@@ -21,6 +29,7 @@ pub struct Element<F> {
     padding: Vec4,
     shape: Option<Shape>,
     action: Option<F>,
+    direction: FlexDirection
 }
 
 #[derive(Clone,Debug)]
@@ -45,6 +54,7 @@ where
             margin: Vec4::ZERO,
             padding: Vec4::ZERO,
             zorder: 1,
+            direction: FlexDirection::Row,
         }
     }
 
@@ -102,6 +112,11 @@ where
         self
     }
 
+    pub fn direction(mut self, direction: FlexDirection) -> Self {
+        self.direction = direction;
+        self
+    }
+
     // pub fn padding(mut self, padding: Vec4) -> Self {
     //     self.padding = padding;
     //     self
@@ -156,6 +171,12 @@ where
                 top: length(self.padding.y),
                 bottom: length(self.padding.w),
             },
+            flex_direction: match self.direction {
+                FlexDirection::Row => taffy::FlexDirection::Row,
+                FlexDirection::Column => taffy::FlexDirection::Column,
+                FlexDirection::RowReverse => taffy::FlexDirection::RowReverse,
+                FlexDirection::ColumnReverse => taffy::FlexDirection::ColumnReverse,
+            },
             ..Default::default()
         }
     }
@@ -176,7 +197,7 @@ where
 
         self.position = bevy::prelude::Vec3::new(
             painter.origin.unwrap().x + layout.location.x + self.size.x / 2. + org.x,
-            painter.origin.unwrap().y - self.size.y / 2. - layout.location.y + org.y,
+            painter.origin.unwrap().y - self.size.y / 2. - layout.location.y - org.y,
             0.,
         );
 
