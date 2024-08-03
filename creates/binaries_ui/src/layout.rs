@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::{Arc, RwLock}};
 
-use bevy::{log::trace, prelude::Resource};
+use bevy::prelude::Resource;
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{
     prelude::TaffyMaxContent, Dimension, JustifyContent, NodeId, Size, Style, TaffyTree,
@@ -53,22 +53,34 @@ impl SDUILayouts {
         self.hash_elements.values_mut()
     }
 
-    pub fn push(&mut self, element: impl UIElement + 'static) {
+    pub fn push(&mut self, element: impl UIElement + 'static) -> NodeId {
         let child = self
             .taffy
             .new_leaf(element.style()).unwrap();
         self.taffy.add_child(self.root, child).unwrap();
         self.hash_elements.insert(child, Box::new(element));
         self.taffy.compute_layout(self.root, Size::MAX_CONTENT).expect("msg");
+        child
     }
     
-    pub fn push_element(&mut self, element: Box<dyn UIElement>) {
+    pub fn push_element(&mut self, element: Box<dyn UIElement>) -> NodeId {
         let child = self
             .taffy
             .new_leaf(element.style()).unwrap();
         self.taffy.add_child(self.root, child).unwrap();
         self.hash_elements.insert(child, element);
         self.taffy.compute_layout(self.root, Size::MAX_CONTENT).expect("msg");
+        child
+    }
+
+    pub fn push_element_with_id(&mut self, element: Box<dyn UIElement>, id: NodeId) -> NodeId {
+        let child = self
+            .taffy
+            .new_leaf(element.style()).unwrap();
+        self.taffy.add_child(id, child).unwrap();
+        self.hash_elements.insert(child, element);
+        self.taffy.compute_layout(self.root, Size::MAX_CONTENT).expect("msg");
+        child
     }
 
     pub fn init(&mut self, painter: &mut ShapePainter) {
@@ -87,15 +99,21 @@ impl SDUILayouts {
     }
 
     pub fn draw(&mut self, painter: &mut ShapePainter) {
-       
+        let mut list = Vec::new();
         for (nodeid, element) in self.hash_elements.iter_mut() {
-            if !element.isready() {
+            if !element.is_ready() {
                 let layout = self.taffy.layout(*nodeid).expect("布局错误");
                 element.update((-100.,-100.), painter, layout);
-                element.setready();
+                element.set_ready();
                 println!("{:?}", layout);
             }
+            list.push((element.z_order(),nodeid.clone()));
             element.draw(painter);
+        }
+
+        list.sort_by(|a,b| a.0.cmp(&b.0));
+        for (_,element) in list.iter() {
+            self.hash_elements.get_mut(element).unwrap().draw(painter);
         }
     }
 

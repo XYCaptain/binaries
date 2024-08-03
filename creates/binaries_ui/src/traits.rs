@@ -15,17 +15,23 @@ pub trait UIElement: Sync + Send {
         }
     }
 
-    fn isready(&self) -> bool {
+    fn is_ready(&self) -> bool {
         false
     }
 
-    fn setready(&mut self);
+    fn set_ready(&mut self);
 
     fn update(&mut self, cursor: (f32, f32),painter: &mut ShapePainter, layout: &Layout);
 
     fn update_input_state(&mut self, state: UIMouse);
     
     fn exc(&mut self, ctx:&mut Context);
+
+    fn z_order(&self) -> i32 {
+        0
+    }
+
+    fn set_z_order(&mut self,z_order:i32) -> i32;
 }
 
 pub trait UILayout {

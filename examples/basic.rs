@@ -1,17 +1,16 @@
 use std::time::Duration;
 
-use bevy::color::palettes::css::{
-    BLUE, DIM_GRAY, RED, SEA_GREEN, YELLOW,
-};
+use bevy::color::palettes::css::{BLUE, DIM_GRAY, RED, YELLOW};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::winit::WinitSettings;
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::Shape2dPlugin;
+use binaries_ui::components::button;
+use binaries_ui::components::stack::stack;
 use binaries_ui::input::print_mouse_events_system;
 use binaries_ui::layout::{Context, SDUILayouts};
-use binaries_ui::components::{button, stack::*};
 
 fn main() {
     App::new()
@@ -26,17 +25,19 @@ fn main() {
         .add_plugins(Shape2dPlugin::default())
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
-        .add_systems(Startup, (
-            layout_setup.before(ui_setup),
-            ui_setup,
-            setup.after(ui_setup)))
+        .add_systems(
+            Startup,
+            (
+                layout_setup.before(ui_setup),
+                ui_setup,
+                setup.after(ui_setup),
+            ),
+        )
         .add_systems(Update, print_mouse_events_system)
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle {
         camera: Camera {
             order: 0,
@@ -46,13 +47,13 @@ fn setup(
     });
 
     commands.spawn(Camera3dBundle {
-            camera: Camera {
-                order: 1,
-                ..default()
-            },
-            transform: Transform::from_xyz(-20.0, 20., 15.0).looking_at(Vec3::ZERO, Vec3::Y),
+        camera: Camera {
+            order: 1,
             ..default()
-        });
+        },
+        transform: Transform::from_xyz(-20.0, 20., 15.0).looking_at(Vec3::ZERO, Vec3::Y),
+        ..default()
+    });
 }
 
 fn layout_setup(
@@ -65,13 +66,15 @@ fn layout_setup(
     layouts.init(&mut painter);
 }
 
-fn ui_setup(
-    mut layouts: ResMut<SDUILayouts>,
-) {
-    stack((
-        button(|_|{ println!("1");}).color(RED).size(Vec2::new(100., 41.8)),
-        button(|_|{ println!("2");}).color(SEA_GREEN).size(Vec2::new(100., 41.8)).margin(Vec4::splat(10.)).round(5.),
-        button(|_|{ println!("3");}).color(BLUE).size(Vec2::new(100., 41.8)),
-        button(|_|{ println!("4");}).color(YELLOW).size(Vec2::new(100., 41.8))
-    )).push_to_layout(&mut layouts);
+fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
+    stack(
+        (
+            button(|_: &mut Context| {println!("1")}).size(Vec2::new(100., 100.)).color(BLUE),
+            button(|_: &mut Context| {println!("2")}).size(Vec2::new(100., 100.)).color(RED),
+        ),
+        |_: &mut Context| {println!("3")},
+    )
+    .size(Vec2::new(2000., 200.))
+    .color(Srgba::new(1.0, 1.0, 1.0, 0.0))  
+    .push_to_layout(&mut layouts);
 }

@@ -1,16 +1,16 @@
-
-
-use bevy::{ color::{palettes::css::SEA_GREEN, Srgba}, math::{Vec2, Vec3, Vec4}};
+use crate::{layout::Context, traits::UIElement};
+use bevy::{
+    color::{palettes::css::SEA_GREEN, Srgba},
+    math::{i32, Vec2, Vec3, Vec4},
+};
 use bevy_vector_shapes::{prelude::ShapePainter, shapes::RectPainter};
 use taffy::{prelude::length, Dimension, Rect, Size, Style};
-use crate::{layout::Context, traits::UIElement};
 
 use super::UIMouse;
 
-
 #[derive(Clone)]
-pub struct Element<F>
-{
+pub struct Element<F> {
+    zorder: i32,
     tile: String,
     color: Srgba,
     size: Vec2,
@@ -24,38 +24,43 @@ pub struct Element<F>
 }
 
 #[derive(Clone)]
-struct Shape{
+struct Shape {
     pub round: Vec4,
 }
 
-// F: Fn(&mut State, PointerButton) -> MessageResult<Action> + Send + Sync + 'static,
 impl<F> Element<F>
-where  F: Fn(&mut Context) + Send + Sync + 'static,
+where
+    F: Fn(&mut Context) + Send + Sync + 'static,
 {
     pub fn new() -> Self {
         Self {
             tile: "Button".to_string(),
             color: SEA_GREEN,
             size: Vec2::new(10.0, 10.0),
-            position: Vec3::new(0.0, 0.0,0.0),
+            position: Vec3::new(0.0, 0.0, 0.0),
             state: UIMouse::Release,
             isready: false,
             action: None,
             shape: None,
             margin: Vec4::ZERO,
             padding: Vec4::ZERO,
+            zorder: 1,
         }
     }
 
     pub fn insection(&self, point: Vec2) -> bool {
-        if point.x > self.position.x - self.size.x / 2. && point.x < self.position.x + self.size.x / 2. {
-            if point.y > -self.position.y - self.size.y / 2. && point.y < -self.position.y + self.size.y / 2. {
+        if point.x > self.position.x - self.size.x / 2.
+            && point.x < self.position.x + self.size.x / 2.
+        {
+            if point.y > -self.position.y - self.size.y / 2.
+                && point.y < -self.position.y + self.size.y / 2.
+            {
                 return true;
             }
         }
         return false;
-    }   
-    
+    }
+
     pub fn color(mut self, color: Srgba) -> Self {
         self.color = color;
         self
@@ -71,8 +76,8 @@ where  F: Fn(&mut Context) + Send + Sync + 'static,
         self
     }
 
-    pub fn action(mut self, action: F) -> Self {
-        self.action = Some(action);
+    pub fn action(mut self, action: Option<F>) -> Self {
+        self.action = action;
         self
     }
 
@@ -82,7 +87,18 @@ where  F: Fn(&mut Context) + Send + Sync + 'static,
     }
 
     pub fn round(mut self, round: f32) -> Self {
-        self.shape = Some(Shape{round: Vec4::splat(round)});    
+        self.shape = Some(Shape {
+            round: Vec4::splat(round),
+        });
+        self
+    }
+
+    pub fn get_size(&self) -> Vec2 {
+        self.size
+    }
+
+    pub fn order(mut self, zorder: i32) -> Self {
+        self.zorder = zorder;
         self
     }
 
@@ -92,9 +108,9 @@ where  F: Fn(&mut Context) + Send + Sync + 'static,
     // }
 }
 
-
 impl<F> UIElement for Element<F>
-where  F: Fn(&mut Context) + Send + Sync + 'static,
+where
+    F: Fn(&mut Context) + Send + Sync + 'static,
 {
     fn draw(&self, painter: &mut ShapePainter) {
         match self.state {
@@ -118,7 +134,7 @@ where  F: Fn(&mut Context) + Send + Sync + 'static,
         }
 
         painter.rect(self.size);
-        
+
         painter.corner_radii = Vec4::ZERO;
     }
 
@@ -143,36 +159,38 @@ where  F: Fn(&mut Context) + Send + Sync + 'static,
             ..Default::default()
         }
     }
-    
+
     fn size(&self) -> (f32, f32) {
         (self.size.x, self.size.y)
     }
-    
-    fn isready(&self) -> bool {
+
+    fn is_ready(&self) -> bool {
         self.isready
     }
 
-    fn setready(&mut self) {
+    fn set_ready(&mut self) {
         self.isready = true;
     }
 
-    fn update(
-        &mut self,
-        cursor: (f32, f32),
-        painter: &mut ShapePainter,
-        layout:&taffy::Layout) {
-        self.position = bevy::prelude::Vec3::new(painter.origin.unwrap().x + layout.location.x + self.size.x / 2., painter.origin.unwrap().y - self.size.y / 2. - layout.location.y,0.);
-        let curo_screen = Vec2::new(cursor.0 + painter.origin.unwrap().x, cursor.1 - painter.origin.unwrap().y);
+    fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter, layout: &taffy::Layout) {
+        self.position = bevy::prelude::Vec3::new(
+            painter.origin.unwrap().x + layout.location.x + self.size.x / 2.,
+            painter.origin.unwrap().y - self.size.y / 2. - layout.location.y,
+            0.,
+        );
+        let curo_screen = Vec2::new(
+            cursor.0 + painter.origin.unwrap().x,
+            cursor.1 - painter.origin.unwrap().y,
+        );
 
         if self.insection(curo_screen) {
             self.state = UIMouse::Hover;
-        }
-        else {
+        } else {
             self.state = UIMouse::Release;
         }
     }
-    
-    fn update_input_state(&mut self, state: UIMouse)  {
+
+    fn update_input_state(&mut self, state: UIMouse) {
         match state {
             UIMouse::Click => {
                 if self.state == UIMouse::Hover {
@@ -184,17 +202,29 @@ where  F: Fn(&mut Context) + Send + Sync + 'static,
                     self.state = UIMouse::Release;
                 }
             }
-            _=> {}
+            _ => {}
         }
     }
 
-    fn exc(&mut self, context:&mut Context) {
+    fn exc(&mut self, context: &mut Context) {
         match self.state {
-            UIMouse::Hover => {},
-            UIMouse::Click => { self.action.as_ref().unwrap()(context);  self.state = UIMouse::Release;}, 
-            UIMouse::Release => {},
+            UIMouse::Hover => {}
+            UIMouse::Click => {
+                self.action.as_ref().unwrap()(context);
+                self.state = UIMouse::Release;
+            }
+            UIMouse::Release => {}
             UIMouse::DoubleClick => todo!(),
             UIMouse::Drag => todo!(),
         }
+    }
+
+    fn z_order(&self) -> i32 {
+        self.zorder
+    }
+
+    fn set_z_order(&mut self,z_order:i32) -> i32 {
+        self.zorder = z_order;
+        self.zorder
     }
 }

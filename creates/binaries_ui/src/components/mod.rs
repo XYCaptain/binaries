@@ -18,9 +18,10 @@ pub enum UIMouse {
 
 use crate::layout::Context;
 
-pub fn button<F:Fn(&mut Context) + Send + Sync + 'static>(action: F) -> Element<F>
+pub fn button<F>(action: F) -> Element<F>
+where F: Fn(&mut Context) + Send + Sync + 'static
 {
-    Element::new().color(Srgba::WHITE).action(action)
+    Element::new().color(Srgba::WHITE).action(Some(action))
 }
 
 #[cfg(test)]
@@ -31,8 +32,26 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_sd_button() {
-        (button(|_|{ }),button(|_|{})).foreach_view(&mut |child| {
+    fn test_button() {
+        (
+         button(|_|{})
+        ,button(|_|{}))
+        .foreach_view(&mut |child| {
+            trace!("{:?}", child.style());
+        });
+    }
+
+    #[test]
+    fn test_element() {
+        Element::new().action(Some(|_:&mut Context|{}));
+    }
+
+    #[test]
+    fn test_element_tuple() {
+        (
+            Element::new().action(Some(|_:&mut Context|{})),
+            Element::new().action(Some(|_:&mut Context|{}))
+        ).foreach_view(&mut |child| {
             trace!("{:?}", child.style());
         });
     }
