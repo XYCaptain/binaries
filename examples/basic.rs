@@ -73,24 +73,24 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
                 (
                     button(|_: &mut Context| println!("1"))
                         .size(Vec2::new(100., 100.))
-                        .color(BLUE),
+                        .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).tile("button1".to_string()),
                     button(|_: &mut Context| println!("2"))
                         .size(Vec2::new(100., 100.))
-                        .color(RED),
+                        .color(RED).margin(Vec4::new(20., 20., 30., 40.)).tile("button2".to_string()),
                 ),
                 |_: &mut Context| println!("3"),
             )
-            .size(Vec2::new(300., 200.))
+            .size(Vec2::new(500., 200.))
             .color(Srgba::new(1.0, 0.0, 1.0, 0.8))
-            .tile("stack1"),
+            .tile("stack0"),
             stack(
                 (
                     button(|_: &mut Context| println!("4"))
                         .size(Vec2::new(100., 100.))
-                        .color(GREEN),
+                        .color(GREEN).margin(Vec4::new(10., 20., 30., 40.)).tile("button3".to_string()),
                     button(|_: &mut Context| println!("5"))
                         .size(Vec2::new(100., 100.))
-                        .color(BROWN),
+                        .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).tile("button4".to_string()),
                 ),
                 |_: &mut Context| println!("6"),
             )

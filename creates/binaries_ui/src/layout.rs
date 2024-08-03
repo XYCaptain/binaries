@@ -99,45 +99,44 @@ impl SDUILayouts {
     }
 
     //TODO: needed to optimize
-    fn traverse_init(&mut self, node: NodeId,painter: &mut ShapePainter, mut org:Vec3, cursor: (f32, f32)) {
+    fn traverse_init(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3, cursor: (f32, f32)) {
         let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
         for child in children.iter() {
             let layout = self.taffy.layout(*child).expect("布局错误");
             let element = self.hash_elements.get_mut(child).unwrap();
             
-            element.update(cursor, painter, layout, org);
+            element.update(cursor, painter, layout, origin);
 
-            org = Vec3::new(layout.location.x,layout.location.y,0.) + org;
-            self.traverse_init(*child, painter, org, cursor);
+            let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
+            self.traverse_init(*child, painter, origin_new, cursor);
         }
     }
     
     //TODO: needed to optimize
-    fn traverse_update(&mut self, node: NodeId,painter: &mut ShapePainter, mut org:Vec3, cursor: (f32, f32)) {
+    fn traverse_update(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3, cursor: (f32, f32)) {
         let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
         for child in children.iter() {
             let layout = self.taffy.layout(*child).expect("布局错误");
             let element = self.hash_elements.get_mut(child).unwrap();
             
-            element.update(cursor, painter, layout, org);
+            element.update(cursor, painter, layout, origin);
             
-            org = Vec3::new(layout.location.x,layout.location.y,0.) + org;
-            self.traverse_update(*child, painter, org, cursor);
+            let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
+            self.traverse_update(*child, painter, origin_new, cursor);
         }
     }
     
     //TODO: needed to optimize
-    fn traverse_draw(&mut self, node: NodeId,painter: &mut ShapePainter, mut org:Vec3) {
+    fn traverse_draw(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3) {
         let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
         for child in children.iter() {
             let layout = self.taffy.layout(*child).expect("布局错误");
             let element = self.hash_elements.get_mut(child).unwrap();
             
-            element.update((-100.,-100.), painter, layout,org);
-            
-            org = Vec3::new(layout.location.x,layout.location.y,0.) + org;
+            element.update((-100.,-100.), painter, layout, origin);
+            let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
             element.draw(painter);
-            self.traverse_draw(*child, painter, org);
+            self.traverse_draw(*child, painter, origin_new);
         }
     }
     
