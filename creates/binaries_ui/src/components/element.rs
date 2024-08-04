@@ -1,11 +1,13 @@
-use crate::{layout::Context, traits::UIElement};
+use std::{any::Any, f64::consts::E, rc::Rc, sync::Arc};
+
+use crate::{layout::Context, traits::UIElement,shape::Rectangle};
 use bevy::{
     color::{palettes::css::SEA_GREEN, Srgba},
     math::{i32, Vec2, Vec3, Vec4},
 };
 use bevy_vector_shapes::{prelude::ShapePainter, shapes::RectPainter};
 use taffy::{prelude::length, Dimension, Rect, Size, Style};
-
+use crate::shape::ShapeTrait;
 use super::UIMouse;
 
 #[derive(Clone,Debug)]
@@ -16,7 +18,7 @@ pub enum FlexDirection {
     ColumnReverse,
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone)]
 pub struct Element<F> {
     zorder: i32,
     tile: String,
@@ -27,14 +29,18 @@ pub struct Element<F> {
     isready: bool,
     margin: Vec4,
     padding: Vec4,
-    shape: Option<Shape>,
+    shape: Option<Arc<dyn ShapeTrait>>,
     action: Option<F>,
+    draw: Option<F>,
     direction: FlexDirection
 }
 
-#[derive(Clone,Debug)]
-struct Shape {
-    pub round: Vec4,
+struct Action<F> {
+    f: F,
+}
+
+pub trait ActionFn {
+    fn call(&self, cx: &mut Context);
 }
 
 impl<F> Element<F>
@@ -44,12 +50,13 @@ where
     pub fn new() -> Self {
         Self {
             tile: "Button".to_string(),
-            color: SEA_GREEN,
+            color: Srgba::new(0.0, 0.0, 0.0, 0.0),
             size: Vec2::new(0.0, 0.0),
             position: Vec3::new(0.0, 0.0, 0.0),
             state: UIMouse::Release,
             isready: false,
             action: None,
+            draw: None,
             shape: None,
             margin: Vec4::ZERO,
             padding: Vec4::ZERO,
@@ -76,8 +83,8 @@ where
         self
     }
 
-    pub fn tile(mut self, tile: String) -> Self {
-        self.tile = tile;
+    pub fn title(mut self, tile: &str) -> Self {
+        self.tile = tile.to_string();
         self
     }
 
@@ -91,18 +98,22 @@ where
         self
     }
 
+    pub fn primatives(mut self, draw: Option<F>) -> Self {
+        self.draw = draw;
+        self
+    }
+
     pub fn margin(mut self, margin: Vec4) -> Self {
         self.margin = margin;
         self
     }
 
     pub fn round(mut self, round: f32) -> Self {
-        self.shape = Some(Shape {
-            round: Vec4::splat(round),
-        });
+        self.shape = Some(Arc::new(Rectangle {round: Vec4::splat(round), size: self.size }));
+        println!("rounding {}",self.size);
         self
     }
-
+ 
     pub fn get_size(&self) -> Vec2 {
         self.size
     }
@@ -117,10 +128,15 @@ where
         self
     }
 
-    // pub fn padding(mut self, padding: Vec4) -> Self {
-    //     self.padding = padding;
-    //     self
-    // }
+    pub fn padding(mut self, padding: Vec4) -> Self {
+        self.padding = padding;
+        self
+    }
+
+    pub fn shape(mut self, shape: Arc<dyn ShapeTrait>   ) -> Self {
+        self.shape = Some(shape);
+        self
+    }
 }
 
 impl<F> UIElement for Element<F>
@@ -142,14 +158,12 @@ where
                 painter.set_color(self.color);
             }
         }
-
         painter.set_translation(self.position);
-        if let Some(shaope) = self.shape.as_ref() {
-            painter.corner_radii = shaope.round;
+
+        if let Some(shape) = self.shape.as_ref() {
+             shape.draw(painter);
         }
-
-        painter.rect(self.size);
-
+        
         painter.corner_radii = Vec4::ZERO;
     }
 
@@ -254,7 +268,7 @@ where
         }
     }
 
-    fn z_order(&self) -> i32 {
+    fn get_z_order(&self) -> i32 {
         self.zorder
     }
 

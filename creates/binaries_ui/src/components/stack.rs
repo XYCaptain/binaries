@@ -1,6 +1,6 @@
 use crate::layout::SDUILayouts;
 use bevy::color::Srgba;
-use bevy::math::{Vec2, Vec3};
+use bevy::math::{Vec2, Vec3, Vec4};
 use bevy::utils::all_tuples;
 
 use super::element::Element;
@@ -9,6 +9,22 @@ use crate::{layout::Context, traits::UIElement};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::Style;
 use crate::components::element::FlexDirection;
+
+pub fn vstack<K,F>(children: K,action: F) -> Stack<K,F>
+where
+    K: ElementTuple,
+    F: Fn(&mut Context) + Send + Sync + 'static,
+{
+    Stack::new(children).action(action).direction(FlexDirection::Column)
+}
+
+pub fn hstack<K,F>(children: K,action: F) -> Stack<K,F>
+where
+    K: ElementTuple,
+    F: Fn(&mut Context) + Send + Sync + 'static,
+{
+    Stack::new(children).action(action).direction(FlexDirection::Row)
+}
 
 pub fn stack<K,F>(children: K,action: F) -> Stack<K,F>
 where
@@ -60,8 +76,8 @@ where
         self
     }
 
-    pub fn title(mut self,tile:&str) -> Self {
-        self.element =  self.element.tile(tile.to_string());
+    pub fn title(mut self,title:&str) -> Self {
+        self.element =  self.element.title(title);
         self
     }
 
@@ -72,6 +88,16 @@ where
 
     pub fn direction(mut self, direction:FlexDirection) -> Self {
         self.element = self.element.direction(direction);
+        self
+    }
+
+    pub fn round(mut self, round:f32) -> Self {
+        self.element = self.element.round(round);
+        self
+    }
+
+    pub fn margin(mut self, margin:Vec4) -> Self {
+        self.element = self.element.margin(margin);
         self
     }
 
@@ -142,13 +168,13 @@ where
         self.element.exc(context);
     }
 
-    fn z_order(&self) -> i32 {
-        self.element.z_order()
+    fn get_z_order(&self) -> i32 {
+        self.element.get_z_order()
     }
 
     fn set_z_order(&mut self, z_order: i32) -> i32{
         self.element.set_z_order(z_order);
-        self.z_order()
+        self.get_z_order()
     }
     
     fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>> {

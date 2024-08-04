@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use bevy::color::palettes::css::{BLUE, BROWN, DIM_GRAY, GREEN, RED, YELLOW};
-use bevy::color::palettes::tailwind::{YELLOW_100, YELLOW_400, YELLOW_900};
+use bevy::color::palettes::css::{BLUE, BROWN, DIM_GRAY, GREEN, RED};
+use bevy::color::palettes::tailwind::{YELLOW_100, YELLOW_400};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -9,7 +9,7 @@ use bevy::winit::WinitSettings;
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::Shape2dPlugin;
 use binaries_ui::components::button;
-use binaries_ui::components::stack::stack;
+use binaries_ui::components::stack::{hstack, vstack};
 use binaries_ui::input::print_mouse_events_system;
 use binaries_ui::layout::{Context, SDUILayouts};
 
@@ -69,96 +69,94 @@ fn layout_setup(
 
 fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
     let stk_second = 
-    stack(
+    hstack(
         (
-            stack(
+            vstack(
                 (
                     button(|_: &mut Context| println!("1"))
                         .size(Vec2::new(100., 100.))
-                        .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).tile("button1".to_string()),
+                        .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).title("button1"),
                     button(|_: &mut Context| println!("2"))
                         .size(Vec2::new(100., 100.))
-                        .color(RED).margin(Vec4::new(20., 20., 30., 40.)).tile("button2".to_string()),
+                        .color(RED).margin(Vec4::new(20., 20., 30., 40.)).title("button2"),
                 ),
                 |_: &mut Context| println!("3"),
             )
-            .direction(binaries_ui::components::element::FlexDirection::Column)
             .size(Vec2::new(300., 500.))
             .color(Srgba::new(1.0, 0.0, 1.0, 0.8))
             .title("stack0"),
-            stack(
+            vstack(
                 (
                     button(|_: &mut Context| println!("4"))
                         .size(Vec2::new(100., 100.))
-                        .color(GREEN).margin(Vec4::new(10., 20., 30., 40.)).tile("button3".to_string()),
+                        .color(GREEN).margin(Vec4::new(10., 20., 30., 40.)).title("button3"),
                     button(|_: &mut Context| println!("5"))
                         .size(Vec2::new(100., 100.))
-                        .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).tile("button4".to_string()),
+                        .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).title("button4"),
                 ),
                 |_: &mut Context| println!("6"),
             )
-            .direction(binaries_ui::components::element::FlexDirection::ColumnReverse)
             .size(Vec2::new(300., 300.))
             .color(Srgba::new(1.0, 1.0, 0.0, 0.8))
             .title("stack2"),
         ),
         |_: &mut Context| println!("6"),
     )
-    .direction(binaries_ui::components::element::FlexDirection::RowReverse)
     .title("stack3")
     .size(Vec2::new(1500., 500.))
     .color(Srgba::new(0.0, 1.0, 1.0, 1.0));
 
 
     let stk_first = 
-    stack(
+    hstack(
         (
-            stack(
+            hstack(
                 (
                     button(|_: &mut Context| println!("1"))
                         .size(Vec2::new(100., 100.))
-                        .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).tile("button1".to_string()),
+                        .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).title("button1"),
                     button(|_: &mut Context| println!("2"))
                         .size(Vec2::new(100., 100.))
-                        .color(RED).margin(Vec4::new(20., 20., 30., 40.)).tile("button2".to_string()),
+                        .color(RED).margin(Vec4::new(20., 20., 30., 40.)).title("button2"),
                 ),
                 |_: &mut Context| println!("3"),
             )
-            .direction(binaries_ui::components::element::FlexDirection::RowReverse)
+            .round(50.)
             .size(Vec2::new(300., 200.))
             .color(Srgba::new(1.0, 0.0, 1.0, 0.8))
             .title("stack0"),
-            stack(
+            hstack(
                 (
                     button(|_: &mut Context| println!("4"))
                         .size(Vec2::new(100., 100.))
-                        .color(GREEN).margin(Vec4::new(10., 20., 30., 40.)).tile("button3".to_string()),
+                        .color(GREEN).margin(Vec4::new(10., 20., 30., 40.)).title("button3"),
                     button(|_: &mut Context| println!("5"))
                         .size(Vec2::new(100., 100.))
-                        .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).tile("button4".to_string()),
+                        .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).title("button4"),
                 ),
                 |_: &mut Context| println!("6"),
             )
-            .direction(binaries_ui::components::element::FlexDirection::Row)
+            .round(100.)
             .size(Vec2::new(300., 300.))
             .color(Srgba::new(1.0, 1.0, 0.0, 0.8))
             .title("stack2"),
         ),
         |_: &mut Context| println!("6"),
     )
-    .direction(binaries_ui::components::element::FlexDirection::Row)
     .title("stack3")
     .size(Vec2::new(1500., 400.))
     .color(Srgba::new(0.0, 1.0, 1.0, 1.0));
 
-    stack((
-        stk_first.clone().color(YELLOW_100),
-        stk_second.clone().color(YELLOW_400),
+   vstack((
+        stk_first.clone().color(YELLOW_100).round(30.),
+        stk_second.clone().color(YELLOW_400).round(20.),
+        (||button(|_:&mut Context|{}))()
         ),
         |_: &mut Context| println!("7")
     )
-    .direction(binaries_ui::components::element::FlexDirection::Column)
     .size(Vec2::new(3000., 2000.))
+    .round(40.)
     .color(Srgba::new(0.3, 0.3, 0.3, 0.3))
-    .title("stack4").push_to_layout(&mut layouts);
+    .title("stack4")
+    .push_to_layout(&mut layouts);
 }

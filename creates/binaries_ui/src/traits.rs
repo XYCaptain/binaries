@@ -28,7 +28,7 @@ pub trait UIElement: Sync + Send {
     
     fn exc(&mut self, ctx:&mut Context);
 
-    fn z_order(&self) -> i32 {0}
+    fn get_z_order(&self) -> i32 {0}
 
     fn set_z_order(&mut self,z_order:i32) -> i32;
 
