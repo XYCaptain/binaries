@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{math::{Vec2, Vec4}, scene::ron::de};
+use bevy::math::{Vec2, Vec4};
 use bevy_vector_shapes::{prelude::ShapePainter, shapes::{RectPainter, RegularPolygonPainter}};
 
 #[derive(Clone,Debug)]

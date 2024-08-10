@@ -91,8 +91,7 @@ impl SDUILayouts {
     }
 
     pub fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter) {
-        // println!("==============================");
-        self.traverse_update(self.root,painter,Vec3::new(0.,0.,0.), cursor);
+        self.traverse_update(self.root,painter,Vec3::new(0.,0.,0.), cursor,None);
     }
 
     pub fn draw(&mut self, painter: &mut ShapePainter) {
@@ -114,16 +113,32 @@ impl SDUILayouts {
     }
     
     //TODO: needed to optimize
-    fn traverse_update(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3, cursor: (f32, f32)) {
+    fn traverse_update(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3, cursor: (f32, f32), render_state: Option<UIMouse>) {
         let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
         for child in children.iter() {
             let layout = self.taffy.layout(*child).expect("布局错误");
             let element = self.hash_elements.get_mut(child).unwrap();
+            let mut blockstate = None;
+
+            if element.get_input_state() != UIMouse::NoneBlock  {
+                
+                element.update(cursor, painter, layout, origin);
+                if render_state.is_some()
+                {
+                    element.set_render_state(render_state.unwrap());
+                    element.set_input_state(UIMouse::Release);
+                }
+
+                if element.block_render_state()
+                {
+                    blockstate = Some(element.get_render_state());
+                }
+            }
             
-            element.update(cursor, painter, layout, origin);
             // println!("layout: {:?} {:?}", layout.location,origin);
             let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
-            self.traverse_update(*child, painter, origin_new, cursor);
+            self.traverse_update(*child, painter, origin_new, cursor, blockstate);
+
         }
     }
     
@@ -147,7 +162,7 @@ impl SDUILayouts {
 
     pub fn update_input_state(&mut self, state: UIMouse) {
         for (_, element) in self.hash_elements.iter_mut() {
-            element.update_input_state(state.clone());
+            element.set_input_state(state.clone());
         }
     }
 

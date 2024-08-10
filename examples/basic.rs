@@ -73,34 +73,31 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
         (
             vstack(
                 (
-                    button(|_: &mut Context| println!("1"))
+                    button()
                         .size(Vec2::new(100., 100.))
                         .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).title("button1"),
-                    button(|_: &mut Context| println!("2"))
+                    button()
                         .size(Vec2::new(100., 100.))
                         .color(RED).margin(Vec4::new(20., 20., 30., 40.)).title("button2"),
-                ),
-                |_: &mut Context| println!("3"),
+                )
             )
             .size(Vec2::new(300., 500.))
             .color(Srgba::new(1.0, 0.0, 1.0, 0.8))
             .title("stack0"),
             vstack(
                 (
-                    button(|_: &mut Context| println!("4"))
+                    button()
                         .size(Vec2::new(100., 100.))
                         .color(GREEN).margin(Vec4::new(10., 20., 30., 40.)).title("button3"),
-                    button(|_: &mut Context| println!("5"))
+                    button()
                         .size(Vec2::new(100., 100.))
                         .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).title("button4"),
-                ),
-                |_: &mut Context| println!("6"),
+                )
             )
             .size(Vec2::new(300., 300.))
             .color(Srgba::new(1.0, 1.0, 0.0, 0.8))
             .title("stack2"),
-        ),
-        |_: &mut Context| println!("6"),
+        )
     )
     .title("stack3")
     .size(Vec2::new(1500., 500.))
@@ -112,14 +109,13 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
         (
             hstack(
                 (
-                    button(|_: &mut Context| println!("1"))
+                    button()
                         .size(Vec2::new(100., 100.))
                         .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).title("button1"),
-                    button(|_: &mut Context| println!("2"))
+                    button()
                         .size(Vec2::new(100., 100.))
                         .color(RED).margin(Vec4::new(20., 20., 30., 40.)).title("button2"),
                 ),
-                |_: &mut Context| println!("3"),
             )
             .round(50.)
             .size(Vec2::new(300., 200.))
@@ -127,21 +123,19 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
             .title("stack0"),
             hstack(
                 (
-                    button(|_: &mut Context| println!("4"))
+                    button()
                         .size(Vec2::new(100., 100.))
                         .color(GREEN).margin(Vec4::new(10., 20., 30., 40.)).title("button3"),
-                    button(|_: &mut Context| println!("5"))
+                    button()
                         .size(Vec2::new(100., 100.))
                         .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).title("button4"),
-                ),
-                |_: &mut Context| println!("6"),
+                )
             )
             .round(100.)
             .size(Vec2::new(300., 300.))
             .color(Srgba::new(1.0, 1.0, 0.0, 0.8))
             .title("stack2"),
-        ),
-        |_: &mut Context| println!("6"),
+        )
     )
     .title("stack3")
     .size(Vec2::new(1500., 400.))
@@ -150,9 +144,8 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
    vstack((
         stk_first.clone().color(YELLOW_100).round(30.),
         stk_second.clone().color(YELLOW_400).round(20.),
-        (||button(|_:&mut Context|{}))()
+        (||button())()
         ),
-        |_: &mut Context| println!("7")
     )
     .size(Vec2::new(3000., 2000.))
     .round(40.)

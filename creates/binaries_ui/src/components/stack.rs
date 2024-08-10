@@ -10,28 +10,25 @@ use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::Style;
 use crate::components::element::FlexDirection;
 
-pub fn vstack<K,F>(children: K,action: F) -> Stack<K,F>
+pub fn vstack<K>(children: K) -> Stack<K>
 where
     K: ElementTuple,
-    F: Fn(&mut Context) + Send + Sync + 'static,
 {
-    Stack::new(children).action(action).direction(FlexDirection::Column)
+    Stack::new(children).direction(FlexDirection::Column)
 }
 
-pub fn hstack<K,F>(children: K,action: F) -> Stack<K,F>
+pub fn hstack<K>(children: K) -> Stack<K>
 where
     K: ElementTuple,
-    F: Fn(&mut Context) + Send + Sync + 'static,
 {
-    Stack::new(children).action(action).direction(FlexDirection::Row)
+    Stack::new(children).direction(FlexDirection::Row)
 }
 
-pub fn stack<K,F>(children: K,action: F) -> Stack<K,F>
+pub fn stack<K>(children: K) -> Stack<K>
 where
     K: ElementTuple,
-    F: Fn(&mut Context) + Send + Sync + 'static,
 {
-    Stack::new(children).action(action)
+    Stack::new(children)
 }
 
 pub trait ElementTuple {
@@ -42,21 +39,18 @@ pub trait ElementTuple {
 }
 
 
-
 #[derive(Clone)]
-pub struct Stack<K,F>
+pub struct Stack<K>
 where
     K: ElementTuple,
-    F: Fn(&mut Context) + Send + Sync + 'static,
 {
     children: K,
-    element: Element<F>,
+    element: Element,
 }
 
-impl<K,F> Stack<K,F>
+impl<K> Stack<K>
 where
     K: ElementTuple,
-    F: Fn(&mut Context) + Send + Sync + 'static,
 {
     pub fn new(children: K) -> Self {
         Self 
@@ -81,8 +75,8 @@ where
         self
     }
 
-    pub fn action(mut self,action:F) -> Self {
-        self.element =  self.element.action(Some(action));
+    pub fn action(mut self, action: impl Fn(&mut Context) + Send + Sync + 'static) -> Self {
+        self.element =  self.element.action(action);
         self
     }
 
@@ -98,6 +92,11 @@ where
 
     pub fn margin(mut self, margin:Vec4) -> Self {
         self.element = self.element.margin(margin);
+        self
+    }
+
+    pub fn render_block(mut self, is_blcok:bool) -> Self {
+        self.element = self.element.render_block(is_blcok);
         self
     }
 
@@ -130,10 +129,9 @@ where
     }
 }
 
-impl<K,F> UIElement for Stack<K,F>
+impl<K> UIElement for Stack<K>
 where
-    K: ElementTuple + Send + Sync,
-    F: Fn(&mut Context) + Send + Sync + 'static,
+    K: ElementTuple + Send + Sync + 'static
 {
     fn draw(&self, painter: &mut ShapePainter) {
         self.element.draw(painter);
@@ -160,10 +158,6 @@ where
         self.element.update(cursor, painter, layout,org);
     }
 
-    fn update_input_state(&mut self, state: UIMouse) {
-        self.element.update_input_state(state);
-    }
-
     fn exc(&mut self, context: &mut Context) {
         self.element.exc(context);
     }
@@ -183,6 +177,26 @@ where
             children.push(child);
         });
         children.into()
+    }
+
+    fn get_input_state(&mut self)-> UIMouse {
+        self.element.get_input_state()
+    }
+
+    fn set_input_state(&mut self, state: UIMouse) {
+        self.element.set_input_state(state);
+    }
+    
+    fn get_render_state(&mut self)-> UIMouse {
+        self.element.get_render_state()
+    }
+    
+    fn set_render_state(&mut self,state: UIMouse ) {
+        self.element.set_render_state(state);
+    }
+
+    fn block_render_state(&mut self)->bool {
+        self.element.block_render_state()
     }
 }
 
@@ -204,7 +218,6 @@ macro_rules! impl_view_tuples{
 
 all_tuples!(impl_view_tuples, 0, 128, T);
 
-
 #[cfg(test)]
 mod tests {
 
@@ -220,10 +233,9 @@ mod tests {
     fn test_stack() {
         stack(
             (
-                button(|_: &mut Context| {}),
-                button(|_: &mut Context| {})
-            ),
-            |_: &mut Context| {}
+                button(),
+                button()
+            )
         );
     }
 
@@ -232,17 +244,15 @@ mod tests {
         (
             stack(
                 (
-                    button(|_: &mut Context| {}),
-                    button(|_: &mut Context| {})
-                ),
-                |_: &mut Context| {}
+                    button(),
+                    button()
+                )
             ),
             stack(
                 (
-                    button(|_: &mut Context| {}),
-                    button(|_: &mut Context| {})
-                ),
-                |_: &mut Context| {}
+                    button(),
+                    button()
+                )
             )
         ).foreach_view(&mut |child| {
               println!("{:?}", child.style());

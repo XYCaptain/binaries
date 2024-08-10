@@ -1,11 +1,10 @@
-use std::{any::Any, f64::consts::E, rc::Rc, sync::Arc};
+use std::{rc::Rc, sync::Arc};
 
 use crate::{layout::Context, traits::UIElement,shape::Rectangle};
 use bevy::{
-    color::{palettes::css::SEA_GREEN, Srgba},
-    math::{i32, Vec2, Vec3, Vec4},
+    app::DynEq, color::Srgba, math::{Vec2, Vec3, Vec4}
 };
-use bevy_vector_shapes::{prelude::ShapePainter, shapes::RectPainter};
+use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{prelude::length, Dimension, Rect, Size, Style};
 use crate::shape::ShapeTrait;
 use super::UIMouse;
@@ -18,20 +17,24 @@ pub enum FlexDirection {
     ColumnReverse,
 }
 
+pub(crate) type Callback = Arc<dyn Fn(&mut Context) + Send + Sync + 'static>;
+
 #[derive(Clone)]
-pub struct Element<F> {
+pub struct Element {
     zorder: i32,
     tile: String,
     color: Srgba,
     size: Vec2,
-    state: UIMouse,
+    action_state: UIMouse,
+    render_state: UIMouse,
+    render_block:bool,
     position: Vec3,
     isready: bool,
     margin: Vec4,
     padding: Vec4,
     shape: Option<Arc<dyn ShapeTrait>>,
-    action: Option<F>,
-    draw: Option<F>,
+    action: Option<Callback>,
+    draw: Option<Callback>,
     direction: FlexDirection
 }
 
@@ -43,9 +46,7 @@ pub trait ActionFn {
     fn call(&self, cx: &mut Context);
 }
 
-impl<F> Element<F>
-where
-    F: Fn(&mut Context) + Send + Sync + 'static,
+impl Element
 {
     pub fn new() -> Self {
         Self {
@@ -53,7 +54,7 @@ where
             color: Srgba::new(0.0, 0.0, 0.0, 0.0),
             size: Vec2::new(0.0, 0.0),
             position: Vec3::new(0.0, 0.0, 0.0),
-            state: UIMouse::Release,
+            action_state: UIMouse::Release,
             isready: false,
             action: None,
             draw: None,
@@ -62,6 +63,8 @@ where
             padding: Vec4::ZERO,
             zorder: 1,
             direction: FlexDirection::Row,
+            render_state: UIMouse::Release,
+            render_block: false,
         }
     }
 
@@ -93,12 +96,12 @@ where
         self
     }
 
-    pub fn action(mut self, action: Option<F>) -> Self {
-        self.action = action;
+    pub fn action(mut self, action: impl Fn(&mut Context) + Send + Sync + 'static) -> Self {
+        self.action = Some(Arc::new(action));
         self
     }
 
-    pub fn primatives(mut self, draw: Option<F>) -> Self {
+    pub fn primatives(mut self, draw: Option<Callback>) -> Self {
         self.draw = draw;
         self
     }
@@ -137,19 +140,22 @@ where
         self.shape = Some(shape);
         self
     }
+
+    pub fn render_block(mut self, is_blcok:bool) -> Self {
+        self.render_block = is_blcok;
+        self
+    }
 }
 
-impl<F> UIElement for Element<F>
-where
-    F: Fn(&mut Context) + Send + Sync + 'static,
+impl UIElement for Element
 {
     fn draw(&self, painter: &mut ShapePainter) {
-        match self.state {
+        match self.render_state {
             UIMouse::Hover => {
                 painter.set_color(self.color + Srgba::WHITE * 0.25);
             }
             UIMouse::Click => {
-                painter.set_color(self.color + Srgba::WHITE * 0.5);
+                painter.set_color(self.color + Srgba::BLACK * 0.5);
             }
             UIMouse::Release => {
                 painter.set_color(self.color);
@@ -158,6 +164,7 @@ where
                 painter.set_color(self.color);
             }
         }
+
         painter.set_translation(self.position);
 
         if let Some(shape) = self.shape.as_ref() {
@@ -225,22 +232,26 @@ where
         }
 
         if self.insection(curo_screen) {
-            self.state = UIMouse::Hover;
+            self.action_state = UIMouse::Hover;
+            self.render_state =  UIMouse::Hover;
         } else {
-            self.state = UIMouse::Release;
+            self.action_state = UIMouse::Release;
+            self.render_state = UIMouse::Release;
         }
     }
 
-    fn update_input_state(&mut self, state: UIMouse) {
+    fn set_input_state(&mut self, state: UIMouse) {
         match state {
             UIMouse::Click => {
-                if self.state == UIMouse::Hover {
-                    self.state = UIMouse::Click;
+                if self.action_state == UIMouse::Hover {
+                    self.action_state = UIMouse::Click;
+                    self.render_state = UIMouse::Click;
                 }
             }
             UIMouse::Drag => {
-                if self.state == UIMouse::Click {
-                    self.state = UIMouse::Release;
+                if self.action_state == UIMouse::Click {
+                    self.action_state = UIMouse::Release;
+                    self.render_state = UIMouse::Release;
                 }
             }
             _ => {}
@@ -248,7 +259,7 @@ where
     }
 
     fn exc(&mut self, context: &mut Context) {
-        match self.state {
+        match self.action_state {
             UIMouse::Hover => {
             }
             UIMouse::Click => {
@@ -260,11 +271,12 @@ where
                         println!("{} no action",self.tile);
                     }
                 }
-                self.state = UIMouse::Release;
+                self.action_state = UIMouse::Release;
             }
             UIMouse::Release => {}
             UIMouse::DoubleClick => todo!(),
             UIMouse::Drag => todo!(),
+            UIMouse::NoneBlock => {},
         }
     }
 
@@ -279,5 +291,21 @@ where
     
     fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>> {
         None
+    }
+    
+    fn get_input_state(&mut self)-> UIMouse {
+        self.action_state.clone()
+    }
+    
+    fn get_render_state(&mut self)-> UIMouse {
+        self.render_state.clone()
+    }
+
+    fn set_render_state(&mut self, state: UIMouse) {
+        self.render_state = state;
+    }
+    
+    fn block_render_state(&mut self)->bool {
+        self.render_block
     }
 }

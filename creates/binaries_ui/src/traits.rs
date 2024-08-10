@@ -4,7 +4,7 @@ use taffy::{Dimension, Layout, Size, Style};
 
 use crate::{components::UIMouse, layout::Context};
 
-pub trait UIElement: Sync + Send {
+pub trait UIElement: Sync + Send + 'static {
     fn draw(&self, painter: &mut ShapePainter);
 
     fn size(&self) -> (f32, f32);
@@ -24,8 +24,16 @@ pub trait UIElement: Sync + Send {
 
     fn update(&mut self, cursor: (f32, f32),painter: &mut ShapePainter, layout: &Layout,org:Vec3);
 
-    fn update_input_state(&mut self, state: UIMouse);
-    
+    fn get_input_state(&mut self)-> UIMouse;
+
+    fn set_input_state(&mut self, state: UIMouse);
+
+    fn get_render_state(&mut self)-> UIMouse;
+
+    fn set_render_state(&mut self,state: UIMouse );
+
+    fn block_render_state(&mut self)->bool;
+
     fn exc(&mut self, ctx:&mut Context);
 
     fn get_z_order(&self) -> i32 {0}

@@ -73,9 +73,7 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
    vstack((
                 hstack(
                     (
-                        button(
-                            |_: &mut Context| println!("1"),
-                        )
+                        button()
                         .size(Vec2::new(60., 60.))
                         .color(WHITE_SMOKE)
                         .shape(Arc::new(Ngon {
@@ -84,15 +82,14 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
                             radius: 12.,
                             rotation: -90.,
                         })),            
-                    ),
-                    |_: &mut Context| println!("4")
+                    )
                 )
                 .size(Vec2::new(60., 60.))
                 .round(30.)
                 .margin(Vec4::splat(10.))
+                .render_block(true)
                 .color(GREEN),
-        ),
-        |_: &mut Context| println!("7")
+        )
     )
     .margin(Vec4::splat(10.))
     .size(Vec2::new(240., 80.))

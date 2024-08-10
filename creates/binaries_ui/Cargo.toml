@@ -7,3 +7,4 @@ edition = "2021"
 bevy = "0.14.0-rc.4" 
 bevy_vector_shapes = "0.8.0"
 taffy = "0.5.2"
+binaries_macros = { path="./macros"}

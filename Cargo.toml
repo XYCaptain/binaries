@@ -4,7 +4,7 @@ version = "0.0.1"
 edition = "2021"
 
 [workspace]
-members = ["creates/binaries_ui"]
+members = ["creates/binaries_ui", "creates/binaries_ui/macros"]
 
 [workspace.dependencies]
 bevy = "0.14.0-rc.4" 

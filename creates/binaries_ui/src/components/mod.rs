@@ -1,27 +1,28 @@
 
 
 use bevy::color::Srgba;
-use element::Element;
+use element::{Callback, Element};
 
 
 pub mod element;
 pub mod stack;
 
-#[derive(Clone,PartialEq,Debug)]
+#[derive(Clone,PartialEq,Debug,Copy)]
 pub enum UIMouse {
     Hover,
     Click,
     Release,
     DoubleClick,
-    Drag
+    Drag,
+    NoneBlock
 }
 
-use crate::layout::Context;
 
-pub fn button<F>(action: F) -> Element<F>
-where F: Fn(&mut Context) + Send + Sync + 'static
+use crate::{layout::Context, traits::UIElement};
+
+pub fn button() -> Element
 {
-    Element::new().color(Srgba::WHITE).action(Some(action))
+    Element::new().color(Srgba::WHITE)
 }
 
 #[cfg(test)]
@@ -34,8 +35,9 @@ mod tests {
     #[test]
     fn test_button() {
         (
-         button(|_|{})
-        ,button(|_|{}))
+         button()
+        ,button()
+        )
         .foreach_view(&mut |child| {
             trace!("{:?}", child.style());
         });
@@ -43,14 +45,14 @@ mod tests {
 
     #[test]
     fn test_element() {
-        Element::new().action(Some(|_:&mut Context|{}));
+        Element::new().action(|_:&mut Context|{});
     }
 
     #[test]
     fn test_element_tuple() {
         (
-            Element::new().action(Some(|_:&mut Context|{})),
-            Element::new().action(Some(|_:&mut Context|{}))
+            Element::new().action(|_:&mut Context|{}),
+            Element::new().action(|_:&mut Context|{})
         ).foreach_view(&mut |child| {
             trace!("{:?}", child.style());
         });
