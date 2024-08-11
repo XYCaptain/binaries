@@ -1,8 +1,9 @@
 use std::sync::{Arc, RwLock};
 
-use super::UIMouse;
+use super::{UIMouseState, UIRenderMode};
 use crate::shape::ShapeTrait;
 use crate::{layout::Context, traits::UIElement};
+use bevy::color::palettes::css::{BLUE_VIOLET, WHITE};
 use bevy::{
     color::Srgba,
     math::{Vec2, Vec3, Vec4},
@@ -19,16 +20,34 @@ pub enum FlexDirection {
 }
 
 pub(crate) type Callback = Arc<dyn Fn(&mut Context) + Send + Sync + 'static>;
+pub(crate) type Renderback = Arc<dyn Fn(&mut ShapePainter) + Send + Sync + 'static>;
+
 pub(crate) type Shpe = Arc<RwLock<dyn ShapeTrait>>;
 
+
 #[derive(Clone)]
-pub struct Action {
-    pub(crate) hover: Option<Callback>,
-    pub(crate) click: Option<Callback>,
+pub struct RenderAction {
+    pub(crate) hover: Option<Renderback>,
+    pub(crate) click: Option<Renderback>,
 }
 
-impl Default for Action {
+impl Default for RenderAction {
     fn default() -> Self {
+        let fun = Arc::new(
+            |painter: &mut ShapePainter|{
+                let color = painter.color.to_srgba() * 0.8 + BLUE_VIOLET * 0.2;
+                painter.set_color(color);
+            }
+        );
+        Self {
+            hover: Some(fun.clone()),
+            click: Some(fun.clone()),
+        }
+    }
+}
+
+impl RenderAction {
+    fn empty() -> Self {
         Self {
             hover: None,
             click: None,
@@ -37,20 +56,37 @@ impl Default for Action {
 }
 
 #[derive(Clone)]
+pub struct IunputAction {
+    pub(crate) hover: Option<Callback>,
+    pub(crate) click: Option<Callback>,
+}
+
+impl Default for IunputAction {
+    fn default() -> Self {
+        Self {
+            hover: None,
+            click: None,
+        }
+    }
+}
+
+
+#[derive(Clone)]
 pub struct Element {
     zorder: i32,
     pub(crate) tile: String,
     color: Srgba,
     size: Vec2,
-    action_state: UIMouse,
-    render_state: UIMouse,
-    render_block: bool,
+    action_state: UIMouseState,
+    render_state: UIMouseState,
+    render_block: UIRenderMode,
     position: Vec3,
     isready: bool,
     margin: Vec4,
     padding: Vec4,
     shape: Option<Shpe>,
-    action: Action,
+    action: IunputAction,
+    render: RenderAction,
     draw: Option<Callback>,
     direction: FlexDirection,
 }
@@ -62,17 +98,18 @@ impl Element {
             color: Srgba::new(0.0, 0.0, 0.0, 0.0),
             size: Vec2::new(0.0, 0.0),
             position: Vec3::new(0.0, 0.0, 0.0),
-            action_state: UIMouse::Release,
+            action_state: UIMouseState::Release,
             isready: false,
-            action: Action::default(),
+            action: IunputAction::default(),
+            render: RenderAction::default(),
             draw: None,
             shape: None,
             margin: Vec4::ZERO,
             padding: Vec4::ZERO,
             zorder: 1,
             direction: FlexDirection::Row,
-            render_state: UIMouse::Release,
-            render_block: false,
+            render_state: UIMouseState::Release,
+            render_block: UIRenderMode::Individual,
         }
     }
 
@@ -158,30 +195,36 @@ impl Element {
         self
     }
 
-    pub fn render_block(mut self, is_blcok: bool) -> Self {
-        self.render_block = is_blcok;
+    pub fn render_block(mut self, ui_traverse: UIRenderMode) -> Self {
+        self.render_block = ui_traverse;
         self
     }
 }
 
 impl UIElement for Element {
     fn draw(&self, painter: &mut ShapePainter) {
-        let mut color = self.color;
-        match self.render_state {
-            UIMouse::Hover | UIMouse::Click  => {
-                if self.action.hover.is_some()
-                {
-                    color = color * 0.75 + Srgba::WHITE * 0.25;
+        painter.set_color(self.color);
+        if self.render_block != UIRenderMode::WithoutSelf
+        {
+            match self.render_state {
+                UIMouseState::Hover  => {
+                    if let Some(action) = self.render.hover.clone()
+                    {
+                        // println!("hover: {} {:?} {}",self.tile, self.render_block,self.render.hover.is_some());
+                        action(painter);
+                    }
                 }
-            }
-            UIMouse::Release => {
-                // painter.set_color(self.color);
-            }
-            _ => {
-                // painter.set_color(self.color);
+                UIMouseState::Click => {
+                    if let Some(action) = self.render.hover.clone()
+                    {
+                        // println!("click: {} {:?} {}",self.tile, self.render_block,self.render.hover.is_some());
+                        action(painter);
+                    }
+                }
+                _ => {}
             }
         }
-        painter.set_color(color);
+
         painter.set_translation(self.position);
 
         if let Some(shape) = self.shape.as_ref() {
@@ -193,24 +236,23 @@ impl UIElement for Element {
 
     fn exc(&mut self, context: &mut Context) {
         match self.action_state {
-            UIMouse::Hover => {
+            UIMouseState::Hover => {
                 match &self.action.hover {
                     Some(action) => action(context),
                     None => {},
                 }
             }
-            UIMouse::Click => {
-                println!("{} click",self.tile);
+            UIMouseState::Click => {
                 match &self.action.click {
                     Some(action) => action(context),
                     None => {}
                 }
-                self.action_state = UIMouse::Release;
+                self.action_state = UIMouseState::Release;
             }
-            UIMouse::Release => {}
-            UIMouse::DoubleClick => todo!(),
-            UIMouse::Drag => todo!(),
-            UIMouse::NoneBlock => {}
+            UIMouseState::Release => {}
+            UIMouseState::DoubleClick => todo!(),
+            UIMouseState::Drag => todo!(),
+            UIMouseState::NoneBlock => {}
         }
     }
 
@@ -253,7 +295,7 @@ impl UIElement for Element {
     fn set_ready(&mut self) {
         self.isready = true;
     }
-
+    /// update position and insection state
     fn update(
         &mut self,
         cursor: (f32, f32),
@@ -277,26 +319,26 @@ impl UIElement for Element {
         }
 
         if self.insection(curo_screen) {
-            self.action_state = UIMouse::Hover;
-            self.render_state = UIMouse::Hover;
+            self.action_state = UIMouseState::Hover;
+            self.render_state = UIMouseState::Hover;
         } else {
-            self.action_state = UIMouse::Release;
-            self.render_state = UIMouse::Release;
+            self.action_state = UIMouseState::Release;
+            self.render_state = UIMouseState::Release;
         }
     }
 
-    fn set_action_state(&mut self, state: UIMouse) {
+    fn set_action_state(&mut self, state: UIMouseState) {
         match state {
-            UIMouse::Click => {
-                if self.action_state == UIMouse::Hover {
-                    self.action_state = UIMouse::Click;
-                    self.render_state = UIMouse::Click;
+            UIMouseState::Click => {
+                if self.action_state == UIMouseState::Hover {
+                    self.action_state = UIMouseState::Click;
+                    self.render_state = UIMouseState::Click;
                 }
             }
-            UIMouse::Drag => {
-                if self.action_state == UIMouse::Click {
-                    self.action_state = UIMouse::Release;
-                    self.render_state = UIMouse::Release;
+            UIMouseState::Drag => {
+                if self.action_state == UIMouseState::Click {
+                    self.action_state = UIMouseState::Release;
+                    self.render_state = UIMouseState::Release;
                 }
             }
             _ => {}
@@ -316,19 +358,28 @@ impl UIElement for Element {
         None
     }
 
-    fn get_input_state(&mut self) -> UIMouse {
+    fn get_input_state(&mut self) -> UIMouseState {
         self.action_state.clone()
     }
 
-    fn get_render_state(&mut self) -> UIMouse {
-        self.render_state.clone()
+    fn get_render_state(&mut self) -> Option<UIMouseState> {
+        match (self.render_state, self.render.hover.is_some()) {
+            (UIMouseState::Hover ,true) | (UIMouseState::Click, true) => {
+                return  Some(self.render_state.clone());
+            },
+            // (UIMouse::Release, true) => todo!(),
+            // (UIMouse::DoubleClick, true) => todo!(),
+            // (UIMouse::Drag, true) => todo!(),
+            // (UIMouse::NoneBlock, true) => todo!(),
+            _=> { return None; }
+        }
     }
 
-    fn set_render_state(&mut self, state: UIMouse) {
+    fn set_render_state(&mut self, state: UIMouseState) {
         self.render_state = state;
     }
 
-    fn block_render_state(&mut self) -> bool {
+    fn block_render_state(&mut self) -> UIRenderMode {
         self.render_block
     }
 }

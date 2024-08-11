@@ -6,7 +6,7 @@ use taffy::{
     prelude::TaffyMaxContent, Dimension, JustifyContent, NodeId, Size, Style, TaffyTree, TraversePartialTree
 };
 
-use crate::components::UIMouse;
+use crate::components::UIMouseState;
 
 use super::traits::UIElement;
 
@@ -113,25 +113,34 @@ impl SDUILayouts {
     }
     
     //TODO: needed to optimize
-    fn traverse_update(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3, cursor: (f32, f32), render_state: Option<UIMouse>) {
+    fn traverse_update(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3, cursor: (f32, f32), inherit_render_state: Option<UIMouseState>) {
         let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
         for child in children.iter() {
             let layout = self.taffy.layout(*child).expect("布局错误");
             let element = self.hash_elements.get_mut(child).unwrap();
             let mut blockstate = None;
 
-            if element.get_input_state() != UIMouse::NoneBlock  {
+            {
+                //Update state
                 element.update(cursor, painter.origin.unwrap().clone(), layout, origin);
                 
-                if render_state.is_some()
+                if inherit_render_state.is_some()
                 {
-                    element.set_render_state(render_state.unwrap());
-                    element.set_action_state(UIMouse::Release);
+                    // inherit render state
+                    element.set_render_state(inherit_render_state.unwrap());
+                    // blocak input action
+                    element.set_action_state(UIMouseState::Release);
                 }
-
-                if element.block_render_state()
-                {
-                    blockstate = Some(element.get_render_state());
+                else {
+                    // render as group
+                    match  element.block_render_state() {
+                        crate::components::UIRenderMode::Group => {
+                            blockstate = element.get_render_state();
+                        }
+                        _ => {
+                            blockstate = None
+                        }
+                    }
                 }
             }
             
@@ -159,7 +168,7 @@ impl SDUILayouts {
         self.taffy.print_tree(self.root);
     }
 
-    pub fn update_input_state(&mut self, state: UIMouse) {
+    pub fn update_input_state(&mut self, state: UIMouseState) {
         for (_, element) in self.hash_elements.iter_mut() {
             element.set_action_state(state.clone());
         }

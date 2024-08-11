@@ -7,12 +7,11 @@ use bevy::window::PrimaryWindow;
 use bevy::winit::WinitSettings;
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::Shape2dPlugin;
-use binaries_ui::components::element;
+use binaries_ui::components::{element, UIRenderMode};
 use binaries_ui::components::stack::{hstack, vstack};
 use binaries_ui::input::print_mouse_events_system;
 use binaries_ui::layout::{Context, SDUILayouts};
 use binaries_ui::shape::Ngon;
-use binaries_ui::traits::UIElement;
 
 fn main() {
     App::new()
@@ -74,17 +73,20 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
                 hstack(
                     (
                         element()
-                        .size(Vec2::new(60., 60.))
-                        .color(WHITE_SMOKE)
-                        .shape(Ngon {
-                            round: Vec4::splat(10.0),
-                            sides: 3.,
-                            radius: 12.,
-                            rotation: -90.,
-                        }),            
+                            .title("ngon")
+                            .size(Vec2::new(60., 60.))
+                            .color(WHITE_SMOKE)
+                            .shape(Ngon {
+                                round: Vec4::splat(10.0),
+                                sides: 3.,
+                                radius: 12.,
+                                rotation: -90.,
+                            }),            
                     )
                 )
                 .size(Vec2::new(60., 60.))
+                .title("hstack")
+                .render_mode(UIRenderMode::Group)
                 .round(30.)
                 .margin(Vec4::splat(10.))
                 .color(GREEN),
@@ -94,9 +96,6 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
     .margin(Vec4::splat(10.))
     .size(Vec2::new(240., 80.))
     .round(40.)
-    .hover(|_|())
-    .click(|_|())
-    .render_block(true)
     .color(Srgba::new(0.8, 0.8, 0.8,0.8))
     .push_to_layout(&mut layouts);
 }

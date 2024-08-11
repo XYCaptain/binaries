@@ -5,7 +5,7 @@ use bevy::math::{Vec2, Vec3, Vec4};
 use bevy::utils::all_tuples;
 
 use super::element::Element;
-use super::UIMouse;
+use super::{UIMouseState, UIRenderMode};
 use crate::{layout::Context, traits::UIElement,shape::Rectangle};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::Style;
@@ -29,7 +29,7 @@ pub fn stack<K>(children: K) -> Stack<K>
 where
     K: ElementTuple,
 {
-    Stack::new(children).shape(Rectangle::default())
+    Stack::new(children).shape(Rectangle::default()).render_mode(UIRenderMode::WithoutSelf)
 }
 
 pub trait ElementTuple {
@@ -105,7 +105,7 @@ where
         self
     }
 
-    pub fn render_block(mut self, is_blcok:bool) -> Self {
+    pub fn render_mode(mut self, is_blcok:UIRenderMode) -> Self {
         self.element = self.element.render_block(is_blcok);
         self
     }
@@ -186,23 +186,23 @@ where
         children.into()
     }
 
-    fn get_input_state(&mut self)-> UIMouse {
+    fn get_input_state(&mut self)-> UIMouseState {
         self.element.get_input_state()
     }
 
-    fn set_action_state(&mut self, state: UIMouse) {
+    fn set_action_state(&mut self, state: UIMouseState) {
         self.element.set_action_state(state);
     }
     
-    fn get_render_state(&mut self)-> UIMouse {
+    fn get_render_state(&mut self)-> Option<UIMouseState> {
         self.element.get_render_state()
     }
     
-    fn set_render_state(&mut self,state: UIMouse ) {
+    fn set_render_state(&mut self,state: UIMouseState ) {
         self.element.set_render_state(state);
     }
 
-    fn block_render_state(&mut self)->bool {
+    fn block_render_state(&mut self)->UIRenderMode {
         self.element.block_render_state()
     }
 }

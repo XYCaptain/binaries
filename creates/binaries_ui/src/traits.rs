@@ -2,7 +2,7 @@ use bevy::math::Vec3;
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{Dimension, Layout, Size, Style};
 
-use crate::{components::UIMouse, layout::Context};
+use crate::{components::{UIMouseState, UIRenderMode}, layout::Context};
 
 pub trait UIElement: Sync + Send + 'static {
     fn draw(&self, painter: &mut ShapePainter);
@@ -24,15 +24,15 @@ pub trait UIElement: Sync + Send + 'static {
 
     fn update(&mut self, cursor: (f32, f32), org:Vec3, layout: &Layout,org:Vec3);
 
-    fn get_input_state(&mut self)-> UIMouse;
+    fn get_input_state(&mut self)-> UIMouseState;
 
-    fn set_action_state(&mut self, state: UIMouse);
+    fn set_action_state(&mut self, state: UIMouseState);
 
-    fn get_render_state(&mut self)-> UIMouse;
+    fn get_render_state(&mut self)->  Option<UIMouseState>;
 
-    fn set_render_state(&mut self,state: UIMouse );
+    fn set_render_state(&mut self,state: UIMouseState );
 
-    fn block_render_state(&mut self)->bool;
+    fn block_render_state(&mut self)-> UIRenderMode;
 
     fn exc(&mut self, ctx:&mut Context);
 

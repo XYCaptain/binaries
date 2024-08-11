@@ -8,7 +8,7 @@ pub mod element;
 pub mod stack;
 
 #[derive(Clone,PartialEq,Debug,Copy)]
-pub enum UIMouse {
+pub enum UIMouseState {
     Hover,
     Click,
     Release,
@@ -17,6 +17,12 @@ pub enum UIMouse {
     NoneBlock
 }
 
+#[derive(Clone,PartialEq,Debug,Copy)]
+pub enum UIRenderMode {
+    Individual,
+    Group,
+    WithoutSelf
+}
 
 use crate::shape::{Circle, Ngon, Rectangle};
 
