@@ -249,7 +249,7 @@ where T: UIElement + Clone
 
 macro_rules! impl_view_tuples{
     ($($element:ident),*) => {
-        impl<$($element),*> ElementTuple for ($($element,)*)
+        impl<$($element),*> ElementSet for ($($element,)*)
         where
             $($element: UIElement + Clone + 'static),*
         {
