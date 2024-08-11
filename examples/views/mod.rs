@@ -1,1 +1,1 @@
-pub mod graph_node_test;
+pub mod node_test;
