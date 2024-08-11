@@ -9,7 +9,7 @@ use bevy::winit::WinitSettings;
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::Shape2dPlugin;
 use binaries_ui::components::{circle, ngon, rectangle};
-use binaries_ui::components::stack::{hstack, vstack};
+use binaries_ui::components::stacks::{hstack, vstack};
 use binaries_ui::input::print_mouse_events_system;
 use binaries_ui::layout::{Context, SDUILayouts};
 

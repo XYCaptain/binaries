@@ -2,7 +2,7 @@ use bevy::math::Vec3;
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{Dimension, Layout, Size, Style};
 
-use crate::{components::{UIMouseState, UIRenderMode}, layout::Context};
+use crate::{components::{UIMouseState, UIRenderMode}, layout::{Context, SDUILayouts}};
 
 pub trait UIElement: Sync + Send + 'static {
     fn draw(&self, painter: &mut ShapePainter);
@@ -41,6 +41,10 @@ pub trait UIElement: Sync + Send + 'static {
     fn set_z_order(&mut self,z_order:i32) -> i32;
 
     fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>>;
+
+    fn add_to_layout(&self, layout: &mut SDUILayouts) {
+        todo!()
+    }
 }
 
 pub trait UILayout {

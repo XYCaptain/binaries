@@ -114,8 +114,8 @@ where
         self
     }
 
-    pub fn push_to_layout(self, layout: &mut SDUILayouts) {
-        let node_id = layout.push_element(Box::new(self.element));
+    pub fn push_to_layout(&self, layout: &mut SDUILayouts) {
+        let node_id = layout.push_element(Box::new(self.element.clone()));
         let mut children = Vec::new();
         self.children.foreach_view(&mut |element| {
             children.push((node_id,element));
@@ -227,6 +227,10 @@ where
 
     fn block_render_state(&mut self)->UIRenderMode {
         self.element.block_render_state()
+    }
+
+    fn add_to_layout(&self, layout: &mut SDUILayouts) {
+        self.push_to_layout(layout);
     }
 }
 

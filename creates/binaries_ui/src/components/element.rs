@@ -223,6 +223,31 @@ impl Element {
         self.render_block = ui_traverse;
         self
     }
+
+    // pub fn push_to_layout(&self, layout: &mut SDUILayouts) {
+    //     let node_id = layout.push_element(Box::new(self.element.clone()));
+    //     let mut children = Vec::new();
+    //     self.children.foreach_view(&mut |element| {
+    //         children.push((node_id,element));
+    //     });
+
+    //     while !children.is_empty() {
+    //         let mut new_children = Vec::new();
+    //         let mut new_pairs = Vec::new();
+    //         for  (p_id,child) in children {
+    //             if child.get_children().is_some() {
+    //                 for grand_child in child.get_children().unwrap() {
+    //                     new_children.push(grand_child);
+    //                 }
+    //             }
+    //             let id = layout.push_element_with_id(child, p_id);
+    //             for grand_child in new_children.drain(..) {
+    //                 new_pairs.push((id,grand_child));
+    //             }
+    //         }
+    //         children = new_pairs;
+    //     }
+    // }
 }
 
 impl UIElement for Element {

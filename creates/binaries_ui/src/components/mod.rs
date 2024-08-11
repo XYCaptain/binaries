@@ -5,7 +5,7 @@ use element::Element;
 
 
 pub mod element;
-pub mod stack;
+pub mod stacks;
 
 #[derive(Clone,PartialEq,Debug,Copy)]
 pub enum UIMouseState {
@@ -49,7 +49,7 @@ pub fn ngon(sides:f32) -> Element
 #[cfg(test)]
 mod tests {
     use bevy::log::trace;
-    use stack::ElementSet;
+    use stacks::ElementSet;
 
     use crate::layout::Context;
 
