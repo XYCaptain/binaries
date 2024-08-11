@@ -1,10 +1,12 @@
+use std::clone;
+
 use crate::layout::SDUILayouts;
 use crate::shape::ShapeTrait;
 use bevy::color::Srgba;
 use bevy::math::{Vec2, Vec3, Vec4};
 use bevy::utils::all_tuples;
 
-use super::element::Element;
+use super::element::{AlignItems, Element};
 use super::{UIMouseState, UIRenderMode};
 use crate::{layout::Context, traits::UIElement,shape::Rectangle};
 use bevy_vector_shapes::prelude::ShapePainter;
@@ -13,26 +15,26 @@ use crate::components::element::FlexDirection;
 
 pub fn vstack<K>(children: K) -> Stack<K>
 where
-    K: ElementTuple,
+    K: ElementSet,
 {
     stack(children).direction(FlexDirection::Column)
 }
 
 pub fn hstack<K>(children: K) -> Stack<K>
 where
-    K: ElementTuple,
+    K: ElementSet,
 {
     stack(children).direction(FlexDirection::Row)
 }
 
 pub fn stack<K>(children: K) -> Stack<K>
 where
-    K: ElementTuple,
+    K: ElementSet,
 {
     Stack::new(children).shape(Rectangle::default()).render_mode(UIRenderMode::WithoutSelf)
 }
 
-pub trait ElementTuple {
+pub trait ElementSet {
     fn foreach_view<F: FnMut(Box<dyn UIElement>)>(&self, f: &mut F);
     fn is_empty(&self) -> bool {
         false
@@ -42,21 +44,23 @@ pub trait ElementTuple {
 #[derive(Clone)]
 pub struct Stack<K>
 where
-    K: ElementTuple,
+    K: ElementSet,
 {
     children: K,
     element: Element,
+    alignment: AlignItems,
 }
 
 impl<K> Stack<K>
 where
-    K: ElementTuple,
+    K: ElementSet,
 {
     pub fn new(children: K) -> Self {
         Self 
         {
             children,
             element: Element::new(),
+            alignment: AlignItems::Start,
         }
     }
 
@@ -134,18 +138,37 @@ where
             children = new_pairs;
         }
     }
+
+    pub fn flex_center(mut self,align:AlignItems)->Self{
+        self.alignment = align;
+        self
+    }
 }
 
 impl<K> UIElement for Stack<K>
 where
-    K: ElementTuple + Send + Sync + 'static
+    K: ElementSet + Send + Sync + 'static
 {
     fn draw(&self, painter: &mut ShapePainter) {
         self.element.draw(painter);
     }
 
     fn style(&self) -> Style {
-        self.element.style()
+        Style{
+            display:taffy::Display::Flex,
+            align_self:
+            match self.alignment {
+                AlignItems::Start => Some(taffy::AlignItems::Start),
+                AlignItems::End => Some(taffy::AlignItems::End),
+                AlignItems::FlexStart => Some(taffy::AlignItems::FlexStart),
+                AlignItems::FlexEnd => Some(taffy::AlignItems::FlexEnd),
+                AlignItems::Center => Some(taffy::AlignItems::Center),
+                AlignItems::Baseline => Some(taffy::AlignItems::Baseline),
+                AlignItems::Stretch => Some(taffy::AlignItems::Stretch),
+            },
+            ..self.element.style()
+        }
+        
     }
 
     fn size(&self) -> (f32, f32) {
@@ -204,6 +227,23 @@ where
 
     fn block_render_state(&mut self)->UIRenderMode {
         self.element.block_render_state()
+    }
+}
+
+impl ElementSet for Element
+{
+    fn foreach_view<FN: FnMut(Box<dyn UIElement>)>(&self, f: &mut FN) {
+        f(Box::new(self.clone()) as Box<dyn UIElement>);
+    }
+}
+
+impl<T> ElementSet for Vec<T> 
+where T: UIElement + Clone
+{
+    fn foreach_view<FN: FnMut(Box<dyn UIElement>)>(&self, f: &mut FN) {
+        for element in self{
+            f(Box::new(element.clone()) as Box<dyn UIElement>);
+        }
     }
 }
 

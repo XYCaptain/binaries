@@ -3,7 +3,8 @@ use std::sync::{Arc, RwLock};
 use super::{UIMouseState, UIRenderMode};
 use crate::shape::ShapeTrait;
 use crate::{layout::Context, traits::UIElement};
-use bevy::color::palettes::css::{BLUE_VIOLET, WHITE};
+use bevy::color::palettes::css::BLUE_VIOLET;
+use bevy::math::Quat;
 use bevy::{
     color::Srgba,
     math::{Vec2, Vec3, Vec4},
@@ -19,9 +20,32 @@ pub enum FlexDirection {
     ColumnReverse,
 }
 
+#[derive(Clone, Debug)]
+pub enum AlignItems {
+    /// Items are packed toward the start of the axis
+    Start,
+    /// Items are packed toward the end of the axis
+    End,
+    /// Items are packed towards the flex-relative start of the axis.
+    ///
+    /// For flex containers with flex_direction RowReverse or ColumnReverse this is equivalent
+    /// to End. In all other cases it is equivalent to Start.
+    FlexStart,
+    /// Items are packed towards the flex-relative end of the axis.
+    ///
+    /// For flex containers with flex_direction RowReverse or ColumnReverse this is equivalent
+    /// to Start. In all other cases it is equivalent to End.
+    FlexEnd,
+    /// Items are packed along the center of the cross axis
+    Center,
+    /// Items are aligned such as their baselines align
+    Baseline,
+    /// Stretch to fill the container
+    Stretch,
+}
+
 pub(crate) type Callback = Arc<dyn Fn(&mut Context) + Send + Sync + 'static>;
 pub(crate) type Renderback = Arc<dyn Fn(&mut ShapePainter) + Send + Sync + 'static>;
-
 pub(crate) type Shpe = Arc<RwLock<dyn ShapeTrait>>;
 
 
@@ -232,6 +256,7 @@ impl UIElement for Element {
         }
 
         painter.corner_radii = Vec4::ZERO;
+        painter.set_rotation(Quat::IDENTITY);
     }
 
     fn exc(&mut self, context: &mut Context) {
@@ -259,6 +284,11 @@ impl UIElement for Element {
     fn style(&self) -> Style {
         Style {
             size: Size {
+                width: Dimension::Auto,
+                height: Dimension::Auto,
+            },
+            justify_content:Some(taffy::AlignContent::Center),
+            min_size: Size {
                 width: Dimension::Length(self.size.x),
                 height: Dimension::Length(self.size.y),
             },
