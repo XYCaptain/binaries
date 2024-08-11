@@ -8,7 +8,7 @@ use bevy::window::PrimaryWindow;
 use bevy::winit::WinitSettings;
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::Shape2dPlugin;
-use binaries_ui::components::button;
+use binaries_ui::components::{circle, ngon, rectangle};
 use binaries_ui::components::stack::{hstack, vstack};
 use binaries_ui::input::print_mouse_events_system;
 use binaries_ui::layout::{Context, SDUILayouts};
@@ -73,10 +73,10 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
         (
             vstack(
                 (
-                    button()
+                    rectangle()
                         .size(Vec2::new(100., 100.))
                         .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).title("button1"),
-                    button()
+                    rectangle()
                         .size(Vec2::new(100., 100.))
                         .color(RED).margin(Vec4::new(20., 20., 30., 40.)).title("button2"),
                 )
@@ -86,10 +86,10 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
             .title("stack0"),
             vstack(
                 (
-                    button()
+                    rectangle()
                         .size(Vec2::new(100., 100.))
                         .color(GREEN).margin(Vec4::new(10., 20., 30., 40.)).title("button3"),
-                    button()
+                        rectangle()
                         .size(Vec2::new(100., 100.))
                         .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).title("button4"),
                 )
@@ -109,10 +109,10 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
         (
             hstack(
                 (
-                    button()
+                    circle()
                         .size(Vec2::new(100., 100.))
                         .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).title("button1"),
-                    button()
+                    ngon(5.5)
                         .size(Vec2::new(100., 100.))
                         .color(RED).margin(Vec4::new(20., 20., 30., 40.)).title("button2"),
                 ),
@@ -123,10 +123,10 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
             .title("stack0"),
             hstack(
                 (
-                    button()
+                    rectangle()
                         .size(Vec2::new(100., 100.))
                         .color(GREEN).margin(Vec4::new(10., 20., 30., 40.)).title("button3"),
-                    button()
+                    rectangle()
                         .size(Vec2::new(100., 100.))
                         .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).title("button4"),
                 )
@@ -144,12 +144,13 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
    vstack((
         stk_first.clone().color(YELLOW_100).round(30.),
         stk_second.clone().color(YELLOW_400).round(20.),
-        (||button())()
+        (
+            ||circle().size(Vec2::new(100., 100.)).title("1").color(YELLOW_400))(),
         ),
     )
     .size(Vec2::new(3000., 2000.))
     .round(40.)
-    .color(Srgba::new(0.3, 0.3, 0.3, 0.3))
+    .color(Srgba::new(1., 0.3, 0.3, 1.0))
     .title("stack4")
     .push_to_layout(&mut layouts);
 }

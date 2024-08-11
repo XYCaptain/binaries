@@ -22,11 +22,11 @@ pub trait UIElement: Sync + Send + 'static {
 
     fn set_ready(&mut self);
 
-    fn update(&mut self, cursor: (f32, f32),painter: &mut ShapePainter, layout: &Layout,org:Vec3);
+    fn update(&mut self, cursor: (f32, f32), org:Vec3, layout: &Layout,org:Vec3);
 
     fn get_input_state(&mut self)-> UIMouse;
 
-    fn set_input_state(&mut self, state: UIMouse);
+    fn set_action_state(&mut self, state: UIMouse);
 
     fn get_render_state(&mut self)-> UIMouse;
 
@@ -41,7 +41,6 @@ pub trait UIElement: Sync + Send + 'static {
     fn set_z_order(&mut self,z_order:i32) -> i32;
 
     fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>>;
-
 }
 
 pub trait UILayout {

@@ -1,11 +1,12 @@
 use crate::layout::SDUILayouts;
+use crate::shape::ShapeTrait;
 use bevy::color::Srgba;
 use bevy::math::{Vec2, Vec3, Vec4};
 use bevy::utils::all_tuples;
 
 use super::element::Element;
 use super::UIMouse;
-use crate::{layout::Context, traits::UIElement};
+use crate::{layout::Context, traits::UIElement,shape::Rectangle};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::Style;
 use crate::components::element::FlexDirection;
@@ -14,21 +15,21 @@ pub fn vstack<K>(children: K) -> Stack<K>
 where
     K: ElementTuple,
 {
-    Stack::new(children).direction(FlexDirection::Column)
+    stack(children).direction(FlexDirection::Column)
 }
 
 pub fn hstack<K>(children: K) -> Stack<K>
 where
     K: ElementTuple,
 {
-    Stack::new(children).direction(FlexDirection::Row)
+    stack(children).direction(FlexDirection::Row)
 }
 
 pub fn stack<K>(children: K) -> Stack<K>
 where
     K: ElementTuple,
 {
-    Stack::new(children)
+    Stack::new(children).shape(Rectangle::default())
 }
 
 pub trait ElementTuple {
@@ -37,7 +38,6 @@ pub trait ElementTuple {
         false
     }
 }
-
 
 #[derive(Clone)]
 pub struct Stack<K>
@@ -75,8 +75,13 @@ where
         self
     }
 
-    pub fn action(mut self, action: impl Fn(&mut Context) + Send + Sync + 'static) -> Self {
-        self.element =  self.element.action(action);
+    pub fn click(mut self, action: impl Fn(&mut Context) + Send + Sync + 'static) -> Self {
+        self.element =  self.element.click(action);
+        self
+    }
+
+    pub fn hover(mut self, action: impl Fn(&mut Context) + Send + Sync + 'static) -> Self {
+        self.element =  self.element.hover(action);
         self
     }
 
@@ -90,6 +95,11 @@ where
         self
     }
 
+    pub fn shape(mut self, shape: impl ShapeTrait) -> Self {
+        self.element = self.element.shape(shape);
+        self
+    }
+
     pub fn margin(mut self, margin:Vec4) -> Self {
         self.element = self.element.margin(margin);
         self
@@ -100,8 +110,7 @@ where
         self
     }
 
-    pub fn push_to_layout(mut self, layout: &mut SDUILayouts) {
-        let mut zorder =  self.element.set_z_order(0);
+    pub fn push_to_layout(self, layout: &mut SDUILayouts) {
         let node_id = layout.push_element(Box::new(self.element));
         let mut children = Vec::new();
         self.children.foreach_view(&mut |element| {
@@ -109,11 +118,9 @@ where
         });
 
         while !children.is_empty() {
-            zorder = zorder + 1;
             let mut new_children = Vec::new();
             let mut new_pairs = Vec::new();
-            for  (p_id,mut child) in children {
-                child.set_z_order(zorder);
+            for  (p_id,child) in children {
                 if child.get_children().is_some() {
                     for grand_child in child.get_children().unwrap() {
                         new_children.push(grand_child);
@@ -154,8 +161,8 @@ where
         self.element.set_ready();
     }
 
-    fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter, layout: &taffy::Layout, org: Vec3) {
-        self.element.update(cursor, painter, layout,org);
+    fn update(&mut self, cursor: (f32, f32), origin: Vec3, layout: &taffy::Layout, org: Vec3) {
+        self.element.update(cursor, origin, layout,org);
     }
 
     fn exc(&mut self, context: &mut Context) {
@@ -183,8 +190,8 @@ where
         self.element.get_input_state()
     }
 
-    fn set_input_state(&mut self, state: UIMouse) {
-        self.element.set_input_state(state);
+    fn set_action_state(&mut self, state: UIMouse) {
+        self.element.set_action_state(state);
     }
     
     fn get_render_state(&mut self)-> UIMouse {
@@ -221,8 +228,9 @@ all_tuples!(impl_view_tuples, 0, 128, T);
 #[cfg(test)]
 mod tests {
 
+    use crate::components::element;
+
     use super::*;
-    use crate::components::button;
 
     #[test]
     fn test_button() {
@@ -233,8 +241,8 @@ mod tests {
     fn test_stack() {
         stack(
             (
-                button(),
-                button()
+                element(),
+                element()
             )
         );
     }
@@ -244,14 +252,14 @@ mod tests {
         (
             stack(
                 (
-                    button(),
-                    button()
+                    element(),
+                    element()
                 )
             ),
             stack(
                 (
-                    button(),
-                    button()
+                    element(),
+                    element()
                 )
             )
         ).foreach_view(&mut |child| {

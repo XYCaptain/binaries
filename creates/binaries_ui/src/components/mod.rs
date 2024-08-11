@@ -1,7 +1,7 @@
 
 
 use bevy::color::Srgba;
-use element::{Callback, Element};
+use element::Element;
 
 
 pub mod element;
@@ -18,11 +18,26 @@ pub enum UIMouse {
 }
 
 
-use crate::{layout::Context, traits::UIElement};
+use crate::shape::{Circle, Ngon, Rectangle};
 
-pub fn button() -> Element
+pub fn element() -> Element
 {
     Element::new().color(Srgba::WHITE)
+}
+
+pub fn rectangle() -> Element
+{
+    Element::new().color(Srgba::WHITE).shape(Rectangle::default())
+}
+
+pub fn circle() -> Element
+{
+    Element::new().color(Srgba::WHITE).shape(Circle::default())
+}
+
+pub fn ngon(sides:f32) -> Element
+{
+    Element::new().color(Srgba::WHITE).shape(Ngon::default().sides(sides))
 }
 
 #[cfg(test)]
@@ -30,13 +45,15 @@ mod tests {
     use bevy::log::trace;
     use stack::ElementTuple;
 
+    use crate::layout::Context;
+
     use super::*;
 
     #[test]
     fn test_button() {
         (
-         button()
-        ,button()
+         element()
+        ,element()
         )
         .foreach_view(&mut |child| {
             trace!("{:?}", child.style());
@@ -45,14 +62,14 @@ mod tests {
 
     #[test]
     fn test_element() {
-        Element::new().action(|_:&mut Context|{});
+        Element::new().click(|_:&mut Context|{});
     }
 
     #[test]
     fn test_element_tuple() {
         (
-            Element::new().action(|_:&mut Context|{}),
-            Element::new().action(|_:&mut Context|{})
+            Element::new().click(|_:&mut Context|{}),
+            Element::new().click(|_:&mut Context|{})
         ).foreach_view(&mut |child| {
             trace!("{:?}", child.style());
         });

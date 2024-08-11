@@ -105,7 +105,7 @@ impl SDUILayouts {
             let layout = self.taffy.layout(*child).expect("布局错误");
             let element = self.hash_elements.get_mut(child).unwrap();
             
-            element.update(cursor, painter, layout, origin);
+            element.update(cursor, painter.origin.unwrap().clone(), layout, origin);
 
             let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
             self.traverse_init(*child, painter, origin_new, cursor);
@@ -121,12 +121,12 @@ impl SDUILayouts {
             let mut blockstate = None;
 
             if element.get_input_state() != UIMouse::NoneBlock  {
+                element.update(cursor, painter.origin.unwrap().clone(), layout, origin);
                 
-                element.update(cursor, painter, layout, origin);
                 if render_state.is_some()
                 {
                     element.set_render_state(render_state.unwrap());
-                    element.set_input_state(UIMouse::Release);
+                    element.set_action_state(UIMouse::Release);
                 }
 
                 if element.block_render_state()
@@ -138,7 +138,6 @@ impl SDUILayouts {
             // println!("layout: {:?} {:?}", layout.location,origin);
             let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
             self.traverse_update(*child, painter, origin_new, cursor, blockstate);
-
         }
     }
     
@@ -149,7 +148,7 @@ impl SDUILayouts {
             let layout = self.taffy.layout(*child).expect("布局错误");
             let element = self.hash_elements.get_mut(child).unwrap();
             
-            element.update((-100.,-100.), painter, layout, origin);
+            element.update((-100.,-100.), painter.origin.unwrap().clone(), layout, origin);
             let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
             element.draw(painter);
             self.traverse_draw(*child, painter, origin_new);
@@ -162,7 +161,7 @@ impl SDUILayouts {
 
     pub fn update_input_state(&mut self, state: UIMouse) {
         for (_, element) in self.hash_elements.iter_mut() {
-            element.set_input_state(state.clone());
+            element.set_action_state(state.clone());
         }
     }
 

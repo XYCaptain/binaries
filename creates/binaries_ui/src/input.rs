@@ -1,7 +1,7 @@
 use bevy::{input::{gestures::{DoubleTapGesture, PinchGesture, RotationGesture}, mouse::{MouseButtonInput, MouseMotion, MouseWheel}, ButtonState}, log::info, math::Vec3, prelude::{EventReader, MouseButton, Query, ResMut, With}, window::{CursorMoved, PrimaryWindow, Window}};
 use bevy_vector_shapes::prelude::ShapePainter;
 
-use crate::{components::UIMouse, layout::{Context, SDUILayouts}};
+use crate::{components::UIMouse, layout::{Context, SDUILayouts}, components::element::Element};
 
 pub fn print_mouse_events_system(
     mut painter: ShapePainter,
