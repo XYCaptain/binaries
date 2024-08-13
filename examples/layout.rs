@@ -5,12 +5,10 @@ use bevy::color::palettes::css::{BLUE, DIM_GRAY, GREEN, RED, YELLOW};
 use bevy::color::palettes::tailwind::YELLOW_200;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy::window::PrimaryWindow;
 use bevy::winit::WinitSettings;
-use bevy_vector_shapes::prelude::ShapePainter;
 use binaries_ui::components::{element, rectangle};
 use binaries_ui::components::stacks::{hstack, vstack};
-use binaries_ui::layout::SDUILayouts;
+use binaries_ui::layout::UILayouts;
 use binaries_ui::traits::UIElement;
 use binaries_ui::UIPlugin;
 
@@ -39,7 +37,7 @@ fn setup(mut commands: Commands) {
     });
 }
 
-fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
+fn ui_setup(mut layouts: ResMut<UILayouts>) {
     let contents =
     vstack(
         (

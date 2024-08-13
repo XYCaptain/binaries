@@ -1,6 +1,6 @@
 use std::clone;
 
-use crate::layout::SDUILayouts;
+use crate::layout::UILayouts;
 use crate::shape::{Curve, ShapeTrait};
 use bevy::color::Srgba;
 use bevy::math::{Vec2, Vec3, Vec4};
@@ -116,8 +116,8 @@ where
         self
     }
 
-    pub fn push_to_layout(&self, layout: &mut SDUILayouts) {
-        let node_id = layout.push_element(Box::new(self.element.clone()));
+    pub fn push_to_layout(&self, layout: &mut UILayouts) {
+        let node_id = layout.push_element(self.element.clone());
         let mut children = Vec::new();
         self.children.foreach_view(&mut |element| {
             children.push((node_id,element));
@@ -132,7 +132,7 @@ where
                         new_children.push(grand_child);
                     }
                 }
-                let id = layout.push_element_with_id(child, p_id);
+                let id = layout.push_element_with_id(child.get_element(), p_id);
                 for grand_child in new_children.drain(..) {
                     new_pairs.push((id,grand_child));
                 }
@@ -235,12 +235,16 @@ where
         self.element.block_render_state()
     }
 
-    fn add_to_layout(&self, layout: &mut SDUILayouts) {
+    fn add_to_layout(&self, layout: &mut UILayouts) {
         self.push_to_layout(layout);
     }
 
     fn get_element_type(&self) -> super::element::ElementType {
         self.element.get_element_type()
+    }
+
+    fn get_element(&self) -> Element {
+        self.element.clone()
     }
 }
 

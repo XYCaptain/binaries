@@ -5,7 +5,7 @@ use bevy::color::palettes::css::DIM_GRAY;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::winit::WinitSettings;
-use binaries_ui::layout::SDUILayouts;
+use binaries_ui::layout::UILayouts;
 use binaries_ui::traits::UIElement;
 use binaries_ui::UIPlugin;
 
@@ -40,6 +40,6 @@ fn setup(mut commands: Commands) {
     });
 }
 
-fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
+fn ui_setup(mut layouts: ResMut<UILayouts>) {
     views::node_test::node_test_view().add_to_layout(&mut layouts);
 }
