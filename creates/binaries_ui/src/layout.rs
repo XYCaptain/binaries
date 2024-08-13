@@ -1,12 +1,12 @@
 use std::{collections::HashMap, sync::{Arc, RwLock}};
 
-use bevy::{color::palettes::{css::BLACK, tailwind::{GREEN_200, RED_400}}, math::{Vec2, Vec3, Vec4}, prelude::Resource};
+use bevy::{color::palettes::{css::BLACK, tailwind::{GREEN_200, RED_400}}, math::{Vec2, Vec3, Vec4, VectorSpace}, prelude::Resource};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{
     prelude::TaffyMaxContent, Dimension, JustifyContent, NodeId, Size, Style, TaffyTree, TraversePartialTree
 };
 
-use crate::components::{element::{AlignItems, Element, FlexDirection}, rectangle, UIMouseState};
+use crate::{components::{element::{self, AlignItems, Element, FlexDirection}, rectangle, UIMouseState}, shape::{Curve, ShapeTrait}};
 
 use super::traits::UIElement;
 
@@ -157,7 +157,34 @@ impl UILayouts {
 
     pub fn draw(&mut self, painter: &mut ShapePainter) {
         self.traverse_draw(self.root,painter,Vec3::new(0.,0.,0.));
+        painter.set_translation(Vec3::ZERO);
+        for (element_id,debuge_element_id) in self.debuge_relations.iter(){
+            let pareant_p = self.elements.get(debuge_element_id).unwrap().position;
+            for child_element_id in  self.taffy.child_ids(*element_id){
+                let child_debug_element_id = self.debuge_relations.get(&child_element_id);
+                if child_debug_element_id.is_some(){
+                    let child_p = self.elements.get(child_debug_element_id.unwrap()).unwrap().position;
+                    Curve::new(pareant_p,child_p).draw(painter);
+                }
+            }
+        }
+        // self.traverse_draw_line(&self.root.clone(),painter)
     }
+
+    // fn traverse_draw_line(&mut self, node: &NodeId, painter: &mut ShapePainter) {
+    //     let children:Vec<NodeId> =  self.taffy.child_ids(*node).collect();
+    //     let parent_element_p = self.elements.get_mut(node).unwrap().position;
+
+    //     for child in children.iter() {
+    //         let child_element_p = self.elements.get(child).unwrap().position;
+    //         // Curve::new(parent_element_p,child_element_p).draw(painter);
+
+    //         let mut rect = rectangle().size(Vec2::new(5.,5.));
+    //         rect.position = child_element_p;
+    //         rect.draw(painter);
+    //         self.traverse_draw_line(child, painter);
+    //     }
+    // }
 
     fn traverse_node(&mut self,node: NodeId, nodes_to_remove: &mut Vec::<NodeId>)
     {

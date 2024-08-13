@@ -125,7 +125,17 @@ impl Default for Curve {
             round: Vec4::splat(0.0),
             star: Vec3::ZERO,
             end: Vec3::ZERO,
-            thickness: 10.,
+            thickness: 5.,
+        }
+    }
+}
+
+impl Curve {
+    pub fn new(star:Vec3,end:Vec3)->Self{
+        Self{
+            star,
+            end,
+            ..Default::default()
         }
     }
 }
@@ -133,7 +143,11 @@ impl Default for Curve {
 impl ShapeTrait for Curve {
     fn draw(&self, painter: &mut ShapePainter) {
         painter.translate(Vec3::Z);
-        painter.line(self.star, self.end);
+        painter.thickness = self.thickness;
+        let delta_h=  self.end - self.star;
+        painter.line(self.star, self.star + Vec3::Y * 0.5 * delta_h.y);
+        painter.line(self.star + Vec3::Y * 0.5 * delta_h.y, self.end - Vec3::Y * 0.5 * delta_h.y);
+        painter.line(self.end - Vec3::Y * 0.5 * delta_h.y, self.end);
     }
     
     fn set_size(&mut self, size: Vec2) {

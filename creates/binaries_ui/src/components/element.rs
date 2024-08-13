@@ -113,7 +113,7 @@ pub struct Element {
     action_state: UIMouseState,
     render_state: UIMouseState,
     render_block: UIRenderMode,
-    position: Vec3,
+    pub(crate) position: Vec3,
     isready: bool,
     margin: Vec4,
     padding: Vec4,
