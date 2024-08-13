@@ -8,7 +8,7 @@ use bevy::winit::WinitSettings;
 use binaries_ui::components::element::ElementType;
 use binaries_ui::components::{circle, ngon, rectangle};
 use binaries_ui::components::stacks::{hstack, vstack};
-use binaries_ui::layout::SDUILayouts;
+use binaries_ui::layout::UILayouts;
 use binaries_ui::UIPlugin;
 
 fn main() {
@@ -43,7 +43,7 @@ fn setup(mut commands: Commands) {
 }
 
 
-fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
+fn ui_setup(mut layouts: ResMut<UILayouts>) {
     let stk_second = 
     hstack(
         (

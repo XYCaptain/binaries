@@ -2,7 +2,7 @@ use bevy::math::Vec3;
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{Dimension, Layout, Size, Style};
 
-use crate::{components::{element::ElementType, UIMouseState, UIRenderMode}, layout::{Context, SDUILayouts}};
+use crate::{components::{element::{Element, ElementType}, UIMouseState, UIRenderMode}, layout::{Context, UILayouts}};
 
 
 
@@ -44,12 +44,14 @@ pub trait UIElement: Sync + Send + 'static {
 
     fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>>;
 
-    fn add_to_layout(&self, layout: &mut SDUILayouts) {
+    fn add_to_layout(&self, layout: &mut UILayouts) {
         let _ = layout;
         todo!()
     }
 
     fn get_element_type(&self) -> ElementType;
+
+    fn get_element(&self) -> Element;
 }
 
 pub trait UILayout {

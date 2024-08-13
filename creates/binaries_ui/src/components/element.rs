@@ -11,8 +11,8 @@ use bevy::{
 };
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::shapes::RectPainter;
-use taffy::prelude::{auto, TaffyAuto};
-use taffy::{LengthPercentageAuto, Position};
+use taffy::prelude::auto;
+use taffy::Position;
 use taffy::{prelude::length, Dimension, Rect, Size, Style};
 
 #[derive(Clone, Debug)]
@@ -482,5 +482,9 @@ impl UIElement for Element {
     
     fn get_element_type(&self) -> ElementType {
         self.element_type.clone()
+    }
+    
+    fn get_element(&self) -> Element {
+        self.clone()
     }
 }
