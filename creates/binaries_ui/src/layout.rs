@@ -22,6 +22,7 @@ impl Default for Context {
 #[derive(Resource)]
 pub struct UILayouts {
     elements: HashMap<NodeId, Element>,
+    debuge_relations: HashMap<NodeId, NodeId>,
     pub taffy: TaffyTree<()>,
     pub root: NodeId,
     pub debug_root: NodeId
@@ -37,11 +38,14 @@ impl UILayouts {
                     ..Default::default()
                 },
             ).expect("");
+        let mut elements = HashMap::new();
+        elements.insert(node, Element::new());
         Self {
             taffy,
-            elements: HashMap::new(),
+            elements: elements,
             root: node,
-            debug_root: NodeId::new(0u64)
+            debug_root: NodeId::new(0u64),
+            debuge_relations: HashMap::new(),
         }
     }
     
@@ -57,16 +61,6 @@ impl UILayouts {
     pub fn iter(&mut self) -> impl Iterator<Item = &mut Element> {
         self.elements.values_mut()
     }
-
-    // pub fn push(&mut self, element: impl UIElement + 'static) -> NodeId {
-    //     let child = self
-    //         .taffy
-    //         .new_leaf(element.style()).unwrap();
-    //     self.taffy.add_child(self.root, child).unwrap();
-    //     self.hash_elements.insert(child, Box::new(element));
-    //     self.taffy.compute_layout(self.root, Size::MAX_CONTENT).expect("msg");
-    //     child
-    // }
 
     ///WIP:olny one debug-node. Need to Update to multi-debug-nodes
     pub fn push_element(&mut self, element: Element) -> NodeId {
@@ -104,14 +98,30 @@ impl UILayouts {
         child
     }
 
-    pub fn init(&mut self, painter: &mut ShapePainter) {
-        self.gen_debug_tree();
-        self.taffy.compute_layout(self.root, taffy::Size::MAX_CONTENT).expect("");
-        self.traverse_init(self.root,painter,Vec3::new(0.,0.,0.), (-100.,-100.));
-    }
+    // pub fn init(&mut self, painter_origin: Vec3) {
+    //     self.taffy.compute_layout(self.root, taffy::Size::MAX_CONTENT).expect("");
+    //     self.traverse_cal_layout(self.root,painter_origin,Vec3::new(0.,0.,0.), (-100.,-100.));
+    // }
+
+    // //TODO: needed to optimize
+    // fn traverse_cal_layout(&mut self, node: NodeId,painter_origin:Vec3, origin:Vec3, cursor: (f32, f32)) {
+    //     let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
+    //     for child in children.iter() {
+    //         let layout = self.taffy.layout(*child).expect("布局错误");
+    //         let element = self.elements.get_mut(child).unwrap();
+            
+    //         element.update(cursor, painter_origin, layout,  origin);
+
+    //         let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
+    //         self.traverse_cal_layout(*child, painter_origin, origin_new, cursor);
+    //     }
+    // }
     
     pub fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter) {
         //setup win size
+        if u64::from(self.debug_root) > 0u64 && self.taffy.child_count(self.debug_root) == 0{
+            self.gen_debug_elements_tree();
+        }
         {
             let old_style = self.taffy.style(self.root).expect("");
             self.taffy.set_style(self.root, Style{
@@ -136,6 +146,13 @@ impl UILayouts {
         }
         self.taffy.compute_layout(self.root, taffy::Size::MAX_CONTENT).expect("");
         self.traverse_update(self.root,painter,Vec3::new(0.,0.,0.), cursor,None);
+
+        for (element,debug_element) in self.debuge_relations.iter() {
+            let render_state = self.elements.get_mut(element).unwrap().get_render_state();
+            if render_state.is_some(){
+                self.elements.get_mut(debug_element).unwrap().set_render_state(render_state.unwrap());
+            }
+        }
     }
 
     pub fn draw(&mut self, painter: &mut ShapePainter) {
@@ -150,20 +167,7 @@ impl UILayouts {
             self.traverse_node(child, nodes_to_remove);
         }
     }
-    
-    //TODO: needed to optimize
-    fn traverse_init(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3, cursor: (f32, f32)) {
-        let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
-        for child in children.iter() {
-            let layout = self.taffy.layout(*child).expect("布局错误");
-            let element = self.elements.get_mut(child).unwrap();
-            
-            element.update(cursor, painter.origin.unwrap().clone(), layout, origin);
 
-            let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
-            self.traverse_init(*child, painter, origin_new, cursor);
-        }
-    }
     
     //TODO: needed to optimize
     fn traverse_update(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3, cursor: (f32, f32), inherit_render_state: Option<UIMouseState>) {
@@ -196,8 +200,6 @@ impl UILayouts {
                     }
                 }
             }
-            
-            // println!("layout: {:?} {:?}", layout.location,origin);
             let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
             self.traverse_update(*child, painter, origin_new, cursor, blockstate);
         }
@@ -216,15 +218,15 @@ impl UILayouts {
         }
     }
 
-    pub fn gen_debug_tree(&mut self){
+    pub fn gen_debug_elements_tree(&mut self){
         if u64::from(self.debug_root) > 0{
-            self.traverse_graph_layout(self.root, self.debug_root);
+            self.traverse_gen_debug_element(self.root, self.debug_root);
         }
     }
 
     // to debug tree
-    fn traverse_graph_layout(&mut self, node: NodeId, p_node:NodeId) {
-        if  u64::from(node) == u64::from(self.debug_root)
+    fn traverse_gen_debug_element(&mut self, node: NodeId, p_node:NodeId) {
+        if u64::from(node) == u64::from(self.debug_root)
         {
             return;
         }
@@ -245,7 +247,8 @@ impl UILayouts {
             self_element = self_element.horizontal_alignment(AlignItems::Center);
         }
 
-        self.push_element_with_id(self_element, v_node);
+        let self_node = self.push_element_with_id(self_element, v_node);
+        self.debuge_relations.insert(node,self_node);
 
         if children.len() ==  0{
             return;
@@ -258,11 +261,9 @@ impl UILayouts {
         let h2: NodeId = self.push_element_with_id(h2_stack, v_node);
 
         for child in children.iter() {
-            self.traverse_graph_layout(*child,h2);
+            self.traverse_gen_debug_element(*child,h2);
         }
     }
-
-
 
     pub fn print_tree(&mut self) {
         self.taffy.print_tree(self.root);

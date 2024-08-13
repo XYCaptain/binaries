@@ -22,10 +22,12 @@ pub fn print_mouse_events_system(
     if painter.origin.is_none() {
         return;
     }
+
     layouts.update((-100., -100.), &mut painter);
     
     for event in cursor_moved_events.read() {
         // info!("{:?}", event);
+        //todo: update state
         layouts.update((event.position.x, event.position.y), &mut painter);
     }
 
@@ -47,14 +49,13 @@ pub fn print_mouse_events_system(
     //     // info!("{:?}", event);
     // }
 
-
     // for event in mouse_wheel_events.read() {
     //     // info!("{:?}", event);
     // }
 
     // // This event will only fire on macOS
     // for event in pinch_gesture_events.read() {
-    //     // info!("{:?}", event);
+    //     info!("{:?}", event);
     // }
 
     // // This event will only fire on macOS

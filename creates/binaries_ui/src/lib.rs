@@ -20,22 +20,11 @@ impl Plugin for UIPlugin {
         .add_systems(
             Startup,
             (
-                layout_setup,
                 camera_setup,
             ),
         )
         .add_systems(Update, print_mouse_events_system);
     }
-}
-
-fn layout_setup(
-    mut painter: ShapePainter,
-    mut layouts: ResMut<UILayouts>,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-) {
-    let window = window_query.get_single().unwrap();
-    painter.origin = Some(Vec3::new(-window.width() * 0.5, window.height() * 0.5, 0.));
-    layouts.init(&mut painter);
 }
 
 fn camera_setup(mut commands: Commands) {
