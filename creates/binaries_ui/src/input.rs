@@ -18,10 +18,11 @@ pub fn print_mouse_events_system(
 ) {
     let window = window_query.get_single().unwrap();
     painter.origin = Some(Vec3::new(-window.width() * 0.5, window.height() * 0.5, 0.));
-    // painter.origin =  Some(Vec3::new(0., 0., 0.));
+    
     if painter.origin.is_none() {
         return;
     }
+    layouts.update((-100., -100.), &mut painter);
     
     for event in cursor_moved_events.read() {
         // info!("{:?}", event);

@@ -4,13 +4,22 @@ use super::{UIMouseState, UIRenderMode};
 use crate::shape::ShapeTrait;
 use crate::{layout::Context, traits::UIElement};
 use bevy::color::palettes::css::BLUE_VIOLET;
-use bevy::math::Quat;
+use bevy::math::{Quat, VectorSpace};
 use bevy::{
     color::Srgba,
     math::{Vec2, Vec3, Vec4},
 };
 use bevy_vector_shapes::prelude::ShapePainter;
+use bevy_vector_shapes::shapes::RectPainter;
+use taffy::prelude::{auto, TaffyAuto};
+use taffy::{LengthPercentageAuto, Position};
 use taffy::{prelude::length, Dimension, Rect, Size, Style};
+
+#[derive(Clone, Debug)]
+pub enum ElementType {
+    Content,
+    Debug
+}
 
 #[derive(Clone, Debug)]
 pub enum FlexDirection {
@@ -22,32 +31,32 @@ pub enum FlexDirection {
 
 #[derive(Clone, Debug)]
 pub enum AlignItems {
-    /// Items are packed toward the start of the axis
     Start,
-    /// Items are packed toward the end of the axis
     End,
-    /// Items are packed towards the flex-relative start of the axis.
-    ///
-    /// For flex containers with flex_direction RowReverse or ColumnReverse this is equivalent
-    /// to End. In all other cases it is equivalent to Start.
     FlexStart,
-    /// Items are packed towards the flex-relative end of the axis.
-    ///
-    /// For flex containers with flex_direction RowReverse or ColumnReverse this is equivalent
-    /// to Start. In all other cases it is equivalent to End.
     FlexEnd,
-    /// Items are packed along the center of the cross axis
     Center,
-    /// Items are aligned such as their baselines align
     Baseline,
-    /// Stretch to fill the container
     Stretch,
 }
+
+#[derive(Clone, Debug)]
+pub enum AlignContent {
+    Start,
+    End,
+    FlexStart,
+    FlexEnd,
+    Center,
+    Stretch,
+    SpaceBetween,
+    SpaceEvenly,
+    SpaceAround,
+}
+
 
 pub(crate) type Callback = Arc<dyn Fn(&mut Context) + Send + Sync + 'static>;
 pub(crate) type Renderback = Arc<dyn Fn(&mut ShapePainter) + Send + Sync + 'static>;
 pub(crate) type Shpe = Arc<RwLock<dyn ShapeTrait>>;
-
 
 #[derive(Clone)]
 pub struct RenderAction {
@@ -113,15 +122,18 @@ pub struct Element {
     render: RenderAction,
     draw: Option<Callback>,
     direction: FlexDirection,
+    horizontal_alignment: AlignItems,
+    vertical_alignment: AlignItems,
+    element_type: ElementType
 }
 
 impl Element {
     pub fn new() -> Self {
         Self {
             tile: "element".to_string(),
-            color: Srgba::new(0.0, 0.0, 0.0, 0.0),
-            size: Vec2::new(0.0, 0.0),
-            position: Vec3::new(0.0, 0.0, 0.0),
+            color: Srgba::ZERO,
+            size: Vec2::ZERO,
+            position: Vec3::ZERO,
             action_state: UIMouseState::Release,
             isready: false,
             action: IunputAction::default(),
@@ -134,6 +146,9 @@ impl Element {
             direction: FlexDirection::Row,
             render_state: UIMouseState::Release,
             render_block: UIRenderMode::Individual,
+            horizontal_alignment: AlignItems::Start,
+            vertical_alignment: AlignItems::Start,
+            element_type: ElementType::Content
         }
     }
 
@@ -224,30 +239,25 @@ impl Element {
         self
     }
 
-    // pub fn push_to_layout(&self, layout: &mut SDUILayouts) {
-    //     let node_id = layout.push_element(Box::new(self.element.clone()));
-    //     let mut children = Vec::new();
-    //     self.children.foreach_view(&mut |element| {
-    //         children.push((node_id,element));
-    //     });
+    pub fn set_position(mut self,pos:Vec3) -> Self{
+        self.position = pos;
+        self
+    }
 
-    //     while !children.is_empty() {
-    //         let mut new_children = Vec::new();
-    //         let mut new_pairs = Vec::new();
-    //         for  (p_id,child) in children {
-    //             if child.get_children().is_some() {
-    //                 for grand_child in child.get_children().unwrap() {
-    //                     new_children.push(grand_child);
-    //                 }
-    //             }
-    //             let id = layout.push_element_with_id(child, p_id);
-    //             for grand_child in new_children.drain(..) {
-    //                 new_pairs.push((id,grand_child));
-    //             }
-    //         }
-    //         children = new_pairs;
-    //     }
-    // }
+    pub fn horizontal_alignment(mut self,align:AlignItems)->Self{
+        self.horizontal_alignment = align;
+        self
+    }
+
+    pub fn vertical_alignment(mut self,align:AlignItems)->Self{
+        self.vertical_alignment = align;
+        self
+    }
+
+    pub fn element_type(mut self, element_type: ElementType) -> Self{
+        self.element_type = element_type;
+        self
+    }
 }
 
 impl UIElement for Element {
@@ -259,25 +269,26 @@ impl UIElement for Element {
                 UIMouseState::Hover  => {
                     if let Some(action) = self.render.hover.clone()
                     {
-                        // println!("hover: {} {:?} {}",self.tile, self.render_block,self.render.hover.is_some());
                         action(painter);
                     }
                 }
                 UIMouseState::Click => {
                     if let Some(action) = self.render.hover.clone()
                     {
-                        // println!("click: {} {:?} {}",self.tile, self.render_block,self.render.hover.is_some());
                         action(painter);
                     }
                 }
                 _ => {}
             }
         }
-
         painter.set_translation(self.position);
 
         if let Some(shape) = self.shape.as_ref() {
             shape.read().unwrap().draw(painter);
+        }
+        else {
+            painter.set_color(self.color);
+            painter.rect(self.size);
         }
 
         painter.corner_radii = Vec4::ZERO;
@@ -307,15 +318,13 @@ impl UIElement for Element {
     }
 
     fn style(&self) -> Style {
-        Style {
-            size: Size {
-                width: Dimension::Auto,
-                height: Dimension::Auto,
-            },
-            justify_content:Some(taffy::AlignContent::Center),
-            min_size: Size {
-                width: Dimension::Length(self.size.x),
-                height: Dimension::Length(self.size.y),
+        let mut def = Style {
+            size: match (self.size.x, self.size.y) {
+                (0.,0.) => Size::auto(),
+                _ => Size {
+                    width: Dimension::Length(self.size.x),
+                    height: Dimension::Length(self.size.y),
+                }
             },
             margin: Rect {
                 left: length(self.margin.x),
@@ -335,8 +344,38 @@ impl UIElement for Element {
                 FlexDirection::RowReverse => taffy::FlexDirection::RowReverse,
                 FlexDirection::ColumnReverse => taffy::FlexDirection::ColumnReverse,
             },
+            align_self: match self.horizontal_alignment {
+                AlignItems::Start => Some(taffy::AlignItems::Start),
+                AlignItems::End => Some(taffy::AlignItems::End),
+                AlignItems::FlexStart => Some(taffy::AlignItems::FlexStart),
+                AlignItems::FlexEnd => Some(taffy::AlignItems::FlexEnd),
+                AlignItems::Center => Some(taffy::AlignItems::Center),
+                AlignItems::Baseline => Some(taffy::AlignItems::Baseline),
+                AlignItems::Stretch => Some(taffy::AlignItems::Stretch),
+            },
+            justify_self: match self.vertical_alignment {
+                AlignItems::Start => Some(taffy::JustifySelf::Start),
+                AlignItems::End => Some(taffy::JustifySelf::End),
+                AlignItems::FlexStart => Some(taffy::JustifySelf::FlexStart),
+                AlignItems::FlexEnd => Some(taffy::JustifySelf::FlexEnd),
+                AlignItems::Center => Some(taffy::JustifySelf::Center),
+                AlignItems::Baseline => Some(taffy::JustifySelf::Baseline),
+                AlignItems::Stretch => Some(taffy::JustifySelf::Stretch),
+            },
             ..Default::default()
+        };
+        match self.element_type {
+            ElementType::Debug => {
+                def = Style{
+                    position: Position::Absolute,
+                    inset: Rect { left: auto(), right: length(0.0), top: length(0.0), bottom: auto() },
+                    justify_self: Some(taffy::JustifySelf::Center),
+                    ..def
+                }
+            },
+            ElementType::Content => {},
         }
+        def
     }
 
     fn size(&self) -> (f32, f32) {
@@ -380,6 +419,9 @@ impl UIElement for Element {
             self.action_state = UIMouseState::Release;
             self.render_state = UIMouseState::Release;
         }
+
+        self.size.x  = layout.size.width;
+        self.size.y = layout.size.height;
     }
 
     fn set_action_state(&mut self, state: UIMouseState) {
@@ -436,5 +478,9 @@ impl UIElement for Element {
 
     fn block_render_state(&mut self) -> UIRenderMode {
         self.render_block
+    }
+    
+    fn get_element_type(&self) -> ElementType {
+        self.element_type.clone()
     }
 }

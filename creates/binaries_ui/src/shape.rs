@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::math::{Vec2, Vec3, Vec4};
-use bevy_vector_shapes::{prelude::ShapePainter, shapes::{DiscPainter, RectPainter, RegularPolygonPainter}};
+use bevy_vector_shapes::{prelude::ShapePainter, shapes::{DiscPainter, LinePainter, RectPainter, RegularPolygonPainter}};
 
 pub trait ShapeTrait: Send + Sync + 'static {
     fn draw(&self, painter: &mut ShapePainter);
@@ -104,6 +104,40 @@ impl ShapeTrait for Circle {
     
     fn set_size(&mut self, size: Vec2) {
         self.radius = size.x.min(size.y) * 0.5;
+    }
+
+    fn set_round(&mut self,round:Vec4) {
+        self.round = round;
+    }
+}
+
+#[derive(Clone,Debug)]
+pub struct Curve {
+    pub round: Vec4,
+    pub star: Vec3,
+    pub end: Vec3,
+    pub thickness: f32,
+}
+
+impl Default for Curve {
+    fn default() -> Self {
+        Self {
+            round: Vec4::splat(0.0),
+            star: Vec3::ZERO,
+            end: Vec3::ZERO,
+            thickness: 10.,
+        }
+    }
+}
+
+impl ShapeTrait for Curve {
+    fn draw(&self, painter: &mut ShapePainter) {
+        painter.translate(Vec3::Z);
+        painter.line(self.star, self.end);
+    }
+    
+    fn set_size(&mut self, size: Vec2) {
+        self.thickness = size.x.min(size.y) * 0.5;
     }
 
     fn set_round(&mut self,round:Vec4) {

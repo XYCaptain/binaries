@@ -1,7 +1,5 @@
-use bevy::{color::{palettes::{css::{GREEN, WHITE_SMOKE}, tailwind::BLUE_200}, Srgba}, math::{Vec2, Vec4}};
+use bevy::{color::{palettes::css::{GREEN, WHITE_SMOKE}, Srgba}, math::{Vec2, Vec4}};
 use binaries_ui::{components::{element, stacks::{stack, hstack, vstack}, UIRenderMode}, shape::Ngon, traits::UIElement};
-
-
 
 pub fn node_test_view() -> impl UIElement
 {
@@ -34,6 +32,8 @@ pub fn node_test_view() -> impl UIElement
     .color(Srgba::new(0.8, 0.8, 0.8,0.8));
 
     vstack((
+            node_element.clone(),
+            node_element.clone(),
             hstack(vec![
                 node_element.clone(),
                 node_element.clone(),
@@ -49,7 +49,6 @@ pub fn node_test_view() -> impl UIElement
                 ]),
             ]),
         ))
-    .flex_center(element::AlignItems::Center)
+    .horizontal_alignment(element::AlignContent::Center)
     .size(Vec2::new(1000., 500.))
-    .color(BLUE_200)
 }

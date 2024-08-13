@@ -31,6 +31,11 @@ pub fn element() -> Element
     Element::new().color(Srgba::WHITE)
 }
 
+pub fn debug_tree()-> Element
+{
+    Element::new().title("debuge")
+}
+
 pub fn rectangle() -> Element
 {
     Element::new().color(Srgba::WHITE).shape(Rectangle::default())

@@ -1,14 +1,14 @@
 use std::clone;
 
 use crate::layout::SDUILayouts;
-use crate::shape::ShapeTrait;
+use crate::shape::{Curve, ShapeTrait};
 use bevy::color::Srgba;
 use bevy::math::{Vec2, Vec3, Vec4};
 use bevy::utils::all_tuples;
 
-use super::element::{AlignItems, Element};
+use super::element::{AlignItems, Element,AlignContent};
 use super::{UIMouseState, UIRenderMode};
-use crate::{layout::Context, traits::UIElement,shape::Rectangle};
+use crate::{layout::Context, traits::UIElement};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::Style;
 use crate::components::element::FlexDirection;
@@ -31,7 +31,7 @@ pub fn stack<K>(children: K) -> Stack<K>
 where
     K: ElementSet,
 {
-    Stack::new(children).shape(Rectangle::default()).render_mode(UIRenderMode::WithoutSelf)
+    Stack::new(children).render_mode(UIRenderMode::WithoutSelf)
 }
 
 pub trait ElementSet {
@@ -48,7 +48,8 @@ where
 {
     children: K,
     element: Element,
-    alignment: AlignItems,
+    horizontal_alignment: AlignContent,
+    vertical_alignment: AlignContent,
 }
 
 impl<K> Stack<K>
@@ -60,7 +61,8 @@ where
         {
             children,
             element: Element::new(),
-            alignment: AlignItems::Start,
+            horizontal_alignment: AlignContent::Start,
+            vertical_alignment: AlignContent::Start,
         }
     }
 
@@ -139,8 +141,13 @@ where
         }
     }
 
-    pub fn flex_center(mut self,align:AlignItems)->Self{
-        self.alignment = align;
+    pub fn horizontal_alignment(mut self,align:AlignContent)->Self{
+        self.horizontal_alignment = align;
+        self
+    }
+    
+    pub fn vertical_alignment(mut self,align:AlignContent)->Self{
+        self.vertical_alignment = align;
         self
     }
 }
@@ -155,20 +162,19 @@ where
 
     fn style(&self) -> Style {
         Style{
-            display:taffy::Display::Flex,
-            align_self:
-            match self.alignment {
-                AlignItems::Start => Some(taffy::AlignItems::Start),
-                AlignItems::End => Some(taffy::AlignItems::End),
-                AlignItems::FlexStart => Some(taffy::AlignItems::FlexStart),
-                AlignItems::FlexEnd => Some(taffy::AlignItems::FlexEnd),
-                AlignItems::Center => Some(taffy::AlignItems::Center),
-                AlignItems::Baseline => Some(taffy::AlignItems::Baseline),
-                AlignItems::Stretch => Some(taffy::AlignItems::Stretch),
+            justify_content: match self.horizontal_alignment {
+                AlignContent::Start => Some(taffy::AlignContent::Start),
+                AlignContent::End => Some(taffy::AlignContent::End),
+                AlignContent::FlexStart => Some(taffy::AlignContent::FlexStart),
+                AlignContent::FlexEnd => Some(taffy::AlignContent::FlexEnd),
+                AlignContent::Center => Some(taffy::AlignContent::Center),
+                AlignContent::Stretch => Some(taffy::AlignContent::Stretch),
+                AlignContent::SpaceBetween => Some(taffy::AlignContent::SpaceAround),
+                AlignContent::SpaceEvenly => Some(taffy::AlignContent::SpaceEvenly),
+                AlignContent::SpaceAround => Some(taffy::AlignContent::SpaceAround)
             },
             ..self.element.style()
         }
-        
     }
 
     fn size(&self) -> (f32, f32) {
@@ -231,6 +237,10 @@ where
 
     fn add_to_layout(&self, layout: &mut SDUILayouts) {
         self.push_to_layout(layout);
+    }
+
+    fn get_element_type(&self) -> super::element::ElementType {
+        self.element.get_element_type()
     }
 }
 

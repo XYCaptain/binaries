@@ -4,12 +4,10 @@ use bevy::color::palettes::css::{BLUE, BROWN, DIM_GRAY, GREEN, RED};
 use bevy::color::palettes::tailwind::{YELLOW_100, YELLOW_400};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy::window::PrimaryWindow;
 use bevy::winit::WinitSettings;
-use bevy_vector_shapes::prelude::ShapePainter;
+use binaries_ui::components::element::ElementType;
 use binaries_ui::components::{circle, ngon, rectangle};
 use binaries_ui::components::stacks::{hstack, vstack};
-use binaries_ui::input::print_mouse_events_system;
 use binaries_ui::layout::SDUILayouts;
 use binaries_ui::UIPlugin;
 
@@ -30,7 +28,6 @@ fn main() {
                 setup.after(ui_setup),
             ),
         )
-        .add_systems(Update, print_mouse_events_system)
         .run();
 }
 
@@ -56,13 +53,10 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
                         .size(Vec2::new(100., 100.))
                         .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).title("button1"),
                     rectangle()
-                        .size(Vec2::new(100., 100.))
                         .color(RED).margin(Vec4::new(20., 20., 30., 40.)).title("button2"),
                 )
             )
-            .size(Vec2::new(300., 500.))
-            .color(Srgba::new(1.0, 0.0, 1.0, 0.8))
-            .title("stack0"),
+            .color(Srgba::new(1.0, 0.0, 1.0, 0.8)).title("stack0"),
             vstack(
                 (
                     rectangle()
@@ -73,13 +67,11 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
                         .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).title("button4"),
                 )
             )
-            .size(Vec2::new(300., 300.))
             .color(Srgba::new(1.0, 1.0, 0.0, 0.8))
             .title("stack2"),
         )
     )
     .title("stack3")
-    .size(Vec2::new(1500., 500.))
     .color(Srgba::new(0.0, 1.0, 1.0, 1.0));
 
 
@@ -97,7 +89,6 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
                 ),
             )
             .round(50.)
-            .size(Vec2::new(300., 200.))
             .color(Srgba::new(1.0, 0.0, 1.0, 0.8))
             .title("stack0"),
             hstack(
@@ -111,25 +102,25 @@ fn ui_setup(mut layouts: ResMut<SDUILayouts>) {
                 )
             )
             .round(100.)
-            .size(Vec2::new(300., 300.))
             .color(Srgba::new(1.0, 1.0, 0.0, 0.8))
             .title("stack2"),
         )
     )
     .title("stack3")
-    .size(Vec2::new(1500., 400.))
     .color(Srgba::new(0.0, 1.0, 1.0, 1.0));
 
-   vstack((
-        stk_first.clone().color(YELLOW_100).round(30.),
-        stk_second.clone().color(YELLOW_400).round(20.),
-        (
-            ||circle().size(Vec2::new(100., 100.)).title("1").color(YELLOW_400))(),
+   hstack((
+        vstack(
+            (
+                stk_first.clone().color(YELLOW_100).round(30.),
+                stk_second.clone().color(YELLOW_400).round(20.),
+                (||circle().size(Vec2::new(100., 100.)).title("1").color(YELLOW_400))(),
+            )
+        ),
+        rectangle().color(GREEN).element_type(ElementType::Debug)
         ),
     )
-    .size(Vec2::new(3000., 2000.))
     .round(40.)
-    .color(Srgba::new(1., 0.3, 0.3, 1.0))
     .title("stack4")
     .push_to_layout(&mut layouts);
 }

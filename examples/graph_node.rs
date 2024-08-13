@@ -5,7 +5,6 @@ use bevy::color::palettes::css::DIM_GRAY;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::winit::WinitSettings;
-use binaries_ui::input::print_mouse_events_system;
 use binaries_ui::layout::SDUILayouts;
 use binaries_ui::traits::UIElement;
 use binaries_ui::UIPlugin;
@@ -27,7 +26,6 @@ fn main() {
                 setup.after(ui_setup),
             ),
         )
-        .add_systems(Update, print_mouse_events_system)
         .run();
 }
 
