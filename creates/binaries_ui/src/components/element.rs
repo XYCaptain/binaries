@@ -4,11 +4,9 @@ use super::{UIMouseState, UIRenderMode};
 use crate::shape::ShapeTrait;
 use crate::{layout::Context, traits::UIElement};
 use bevy::color::palettes::css::BLUE_VIOLET;
-use bevy::math::{Quat, VectorSpace};
-use bevy::{
-    color::Srgba,
-    math::{Vec2, Vec3, Vec4},
-};
+use bevy::color::palettes::tailwind::RED_900;
+use bevy::math::{Quat, Vec3, Vec4, VectorSpace};
+use bevy::{color::Srgba,math::Vec2};
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::shapes::RectPainter;
 use taffy::prelude::auto;
@@ -110,7 +108,9 @@ pub struct Element {
     zorder: i32,
     pub(crate) tile: String,
     color: Srgba,
+    background_color: Srgba,
     size: Vec2,
+    pub(crate) content_size: Vec2,
     action_state: UIMouseState,
     render_state: UIMouseState,
     render_block: UIRenderMode,
@@ -133,7 +133,9 @@ impl Element {
         Self {
             tile: "element".to_string(),
             color: Srgba::ZERO,
+            background_color: Srgba::ZERO,
             size: Vec2::ZERO,
+            content_size: Vec2::ZERO,
             position: Vec3::ZERO,
             action_state: UIMouseState::Release,
             isready: false,
@@ -168,6 +170,11 @@ impl Element {
 
     pub fn color(mut self, color: Srgba) -> Self {
         self.color = color;
+        self
+    }
+
+    pub fn background_color(mut self, color: Srgba) -> Self {
+        self.background_color = color;
         self
     }
 
@@ -288,8 +295,10 @@ impl UIElement for Element {
         if let Some(shape) = self.shape.as_ref() {
             shape.read().unwrap().draw(painter);
         }
-        else {
-            painter.set_color(self.color);
+
+        if self.background_color != Srgba::ZERO 
+        {
+            painter.set_color(self.background_color);
             painter.rect(self.size);
         }
 
@@ -391,20 +400,26 @@ impl UIElement for Element {
     fn set_ready(&mut self) {
         self.isready = true;
     }
+
+    fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3) {
+        self.size.x = layout.size.width;
+        self.size.y = layout.size.height;
+        self.content_size.x = layout.content_size.width;
+        self.content_size.y = layout.content_size.height;
+
+        self.position = bevy::prelude::Vec3::new(
+            origin.x + layout.location.x + self.size.x / 2. + inherit_origin.x,
+            origin.y - self.size.y / 2. - layout.location.y - inherit_origin.y,
+            0.,
+        );
+    }
+    
     /// update position and insection state
-    fn update(
+    fn update_state(
         &mut self,
         cursor: (f32, f32),
         origin: Vec3,
-        layout: &taffy::Layout,
-        org: Vec3,
     ) {
-        self.position = bevy::prelude::Vec3::new(
-            origin.x + layout.location.x + self.size.x / 2. + org.x,
-            origin.y - self.size.y / 2. - layout.location.y - org.y,
-            0.,
-        );
-
         let curo_screen = Vec2::new(
             cursor.0 + origin.x,
             cursor.1 - origin.y,
@@ -421,9 +436,6 @@ impl UIElement for Element {
             self.action_state = UIMouseState::Release;
             self.render_state = UIMouseState::Release;
         }
-
-        self.size.x  = layout.size.width;
-        self.size.y = layout.size.height;
     }
 
     fn set_action_state(&mut self, state: UIMouseState) {

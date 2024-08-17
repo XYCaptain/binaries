@@ -6,7 +6,7 @@ use taffy::{
     prelude::TaffyMaxContent, Dimension, JustifyContent, NodeId, Size, Style, TaffyTree, TraversePartialTree
 };
 
-use crate::{components::{element::{self, AlignItems, Element, FlexDirection}, rectangle, stacks::{hstack, ElementSet, Stack}, text, UIMouseState}, shape::{Curve, ShapeTrait, Text}, text::Config};
+use crate::{components::{element::{self, AlignItems, Element, FlexDirection}, rectangle, stacks::hstack, text, UIMouseState}, shape::{Curve, ShapeTrait, Text}, text::Config};
 
 use super::traits::UIElement;
 
@@ -39,7 +39,7 @@ impl UILayouts {
                 },
             ).expect("");
         let mut elements = HashMap::new();
-        elements.insert(node, Element::new().title("root"));
+        elements.insert(node, Element::new().title("root").background_color(GREEN));
         Self {
             taffy,
             elements: elements,
@@ -98,25 +98,6 @@ impl UILayouts {
         child
     }
 
-    // pub fn init(&mut self, painter_origin: Vec3) {
-    //     self.taffy.compute_layout(self.root, taffy::Size::MAX_CONTENT).expect("");
-    //     self.traverse_cal_layout(self.root,painter_origin,Vec3::new(0.,0.,0.), (-100.,-100.));
-    // }
-
-    // //TODO: needed to optimize
-    // fn traverse_cal_layout(&mut self, node: NodeId,painter_origin:Vec3, origin:Vec3, cursor: (f32, f32)) {
-    //     let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
-    //     for child in children.iter() {
-    //         let layout = self.taffy.layout(*child).expect("布局错误");
-    //         let element = self.elements.get_mut(child).unwrap();
-            
-    //         element.update(cursor, painter_origin, layout,  origin);
-
-    //         let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
-    //         self.traverse_cal_layout(*child, painter_origin, origin_new, cursor);
-    //     }
-    // }
-
     pub fn update_text(&mut self, config: Config) {
         for element in self.elements.values_mut() {
             if let Some(shape) = element.shape.as_ref() {
@@ -126,10 +107,12 @@ impl UILayouts {
     }
     
     pub fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter) {
-        //setup win size
+        //setup dom tree
         if u64::from(self.debug_root) > 0u64 && self.taffy.child_count(self.debug_root) == 0{
             self.gen_debug_elements_tree();
         }
+        
+        //setup win size
         {
             let old_style = self.taffy.style(self.root).expect("");
             self.taffy.set_style(self.root, Style{
@@ -141,6 +124,7 @@ impl UILayouts {
             }).expect("msg");
         }
 
+        //setup win size
         {
             let content_node = self.taffy.get_child_id(self.root, 0);
             let old_style = self.taffy.style(self.root).expect("");
@@ -204,8 +188,8 @@ impl UILayouts {
 
             {
                 //Update state
-                element.update(cursor, painter.origin.unwrap().clone(), layout, origin);
-                
+                element.update_layout(layout, painter.origin.unwrap().clone(), origin);
+                element.update_state(cursor, painter.origin.unwrap().clone());
                 if inherit_render_state.is_some()
                 {
                     // inherit render state
@@ -236,7 +220,6 @@ impl UILayouts {
         for child in children.iter() {
             let layout = self.taffy.layout(*child).expect("布局错误");
             let element = self.elements.get_mut(child).unwrap();
-            element.update((-100.,-100.), painter.origin.unwrap().clone(), layout, origin);
             let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
             element.draw(painter);
             self.traverse_draw(*child, painter, origin_new);
@@ -282,6 +265,7 @@ impl UILayouts {
         self.debuge_relations.insert(node,self_node);
 
         let tile = self.elements.get(&node).unwrap().tile.as_str();
+
         let text_content = text(tile).size(Vec2::new(100., 20.)).horizontal_alignment(AlignItems::Center).vertical_alignment(AlignItems::Center);
         self.push_element_with_id(text_content, self_node);
 

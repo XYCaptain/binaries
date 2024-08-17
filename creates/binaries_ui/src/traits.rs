@@ -24,7 +24,9 @@ pub trait UIElement: Sync + Send + 'static {
 
     fn set_ready(&mut self);
 
-    fn update(&mut self, cursor: (f32, f32), org:Vec3, layout: &Layout,org:Vec3);
+    fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3);
+
+    fn update_state(&mut self, cursor: (f32, f32), origin:Vec3);
 
     fn get_input_state(&mut self)-> UIMouseState;
 

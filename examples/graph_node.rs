@@ -41,5 +41,5 @@ fn setup(mut commands: Commands) {
 }
 
 fn ui_setup(mut layouts: ResMut<UILayouts>) {
-    views::node_test::node_test_view().add_to_layout(&mut layouts);
+    views::node_test::node_panel().add_to_layout(&mut layouts);
 }

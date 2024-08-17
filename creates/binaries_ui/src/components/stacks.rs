@@ -1,16 +1,16 @@
 use std::clone;
 
 use crate::layout::UILayouts;
-use crate::shape::{Curve, Rectangle, ShapeTrait};
+use crate::shape::{Rectangle, ShapeTrait};
 use bevy::color::Srgba;
 use bevy::math::{Vec2, Vec3, Vec4, VectorSpace};
-use bevy::utils::all_tuples;
 
-use super::element::{AlignItems, Element,AlignContent};
-use super::{rectangle, UIMouseState, UIRenderMode};
+use super::element::{Element,AlignContent};
+use super::element_set::ElementSet;
+use super::{UIMouseState, UIRenderMode};
 use crate::{layout::Context, traits::UIElement};
 use bevy_vector_shapes::prelude::ShapePainter;
-use taffy::Style;
+use taffy::{Size, Style};
 use crate::components::element::FlexDirection;
 
 pub fn vstack<K>(children: K) -> Stack<K>
@@ -31,15 +31,10 @@ pub fn stack<K>(children: K) -> Stack<K>
 where
     K: ElementSet,
 {
-    Stack::new(children).render_mode(UIRenderMode::WithoutSelf).shape(Rectangle::default()).color(Srgba::ZERO)
+    Stack::new(children).render_mode(UIRenderMode::WithoutSelf)
 }
 
-pub trait ElementSet {
-    fn foreach_view<F: FnMut(Box<dyn UIElement>)>(&self, f: &mut F);
-    fn is_empty(&self) -> bool {
-        false
-    }
-}
+
 
 #[derive(Clone)]
 pub struct Stack<K>
@@ -73,6 +68,11 @@ where
 
     pub fn color(mut self,color:Srgba) -> Self {
         self.element =  self.element.color(color);
+        self
+    }
+
+    pub fn background_color(mut self,color:Srgba) -> Self {
+        self.element =  self.element.background_color(color);
         self
     }
 
@@ -156,10 +156,6 @@ impl<K> UIElement for Stack<K>
 where
     K: ElementSet + Send + Sync + 'static
 {
-    fn draw(&self, painter: &mut ShapePainter) {
-        self.element.draw(painter);
-    }
-
     fn style(&self) -> Style {
         Style{
             justify_content: match self.horizontal_alignment {
@@ -177,6 +173,10 @@ where
         }
     }
 
+    fn draw(&self, painter: &mut ShapePainter) {
+        self.element.draw(painter);
+    }
+
     fn size(&self) -> (f32, f32) {
         let size = self.element.get_size();
         (size.x, size.y)
@@ -190,8 +190,12 @@ where
         self.element.set_ready();
     }
 
-    fn update(&mut self, cursor: (f32, f32), origin: Vec3, layout: &taffy::Layout, org: Vec3) {
-        self.element.update(cursor, origin, layout,org);
+    fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3) {
+        self.element.update_layout(layout, origin, inherit_origin);
+    }
+
+    fn update_state(&mut self, cursor: (f32, f32), origin:Vec3) {
+        self.element.update_state(cursor, origin);
     }
 
     fn exc(&mut self, context: &mut Context) {
@@ -248,40 +252,7 @@ where
     }
 }
 
-impl ElementSet for Element
-{
-    fn foreach_view<FN: FnMut(Box<dyn UIElement>)>(&self, f: &mut FN) {
-        f(Box::new(self.clone()) as Box<dyn UIElement>);
-    }
-}
 
-impl<T> ElementSet for Vec<T> 
-where T: UIElement + Clone
-{
-    fn foreach_view<FN: FnMut(Box<dyn UIElement>)>(&self, f: &mut FN) {
-        for element in self{
-            f(Box::new(element.clone()) as Box<dyn UIElement>);
-        }
-    }
-}
-
-macro_rules! impl_view_tuples{
-    ($($element:ident),*) => {
-        impl<$($element),*> ElementSet for ($($element,)*)
-        where
-            $($element: UIElement + Clone + 'static),*
-        {
-            #[allow(non_snake_case, unused_variables)]
-            #[track_caller]
-            fn foreach_view<FN: FnMut(Box<dyn UIElement>)>(&self, f: &mut FN) {
-                let ($($element,)*) = self;
-                $(f(Box::new($element.clone()) as Box<dyn UIElement>);)*
-            }
-        }
-    }
-}
-
-all_tuples!(impl_view_tuples, 0, 128, T);
 
 #[cfg(test)]
 mod tests {
