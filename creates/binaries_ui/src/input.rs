@@ -1,7 +1,7 @@
-use bevy::{input::{gestures::{DoubleTapGesture, PinchGesture, RotationGesture}, mouse::{MouseButtonInput, MouseMotion, MouseWheel}, ButtonState}, log::info, math::Vec3, prelude::{EventReader, MouseButton, Query, ResMut, With}, window::{CursorMoved, PrimaryWindow, Window}};
+use bevy::{asset::Assets, input::{gestures::{DoubleTapGesture, PinchGesture, RotationGesture}, mouse::{MouseButtonInput, MouseMotion, MouseWheel}, ButtonState}, log::{info, tracing_subscriber::reload::Handle}, math::Vec3, prelude::{Commands, EventReader, Mesh, MouseButton, Query, ResMut, With}, window::{CursorMoved, PrimaryWindow, Window}};
 use bevy_vector_shapes::prelude::ShapePainter;
 
-use crate::{components::UIMouseState, layout::{Context, UILayouts}, text::Config, traits::UIElement};
+use crate::{components::UIMouseState, layout::{Context, UILayouts}, text::Config};
 
 pub fn print_mouse_events_system(
     mut painter: ShapePainter,
@@ -10,7 +10,8 @@ pub fn print_mouse_events_system(
     window_query: Query<&Window, With<PrimaryWindow>>,
     mut cursor_moved_events: EventReader<CursorMoved>,
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
-    config: Config
+    config: Config,
+    commands: Commands
     // mut mouse_motion_events: EventReader<MouseMotion>,
     // mut mouse_wheel_events: EventReader<MouseWheel>,
     // mut pinch_gesture_events: EventReader<PinchGesture>,
@@ -25,16 +26,14 @@ pub fn print_mouse_events_system(
     }
 
     layouts.update((-100., -100.), &mut painter);
-    layouts.update_text(config);
+    layouts.update_shape(config, commands);
     
     for event in cursor_moved_events.read() {
-        // info!("{:?}", event);
         //todo: update state
         layouts.update((event.position.x, event.position.y), &mut painter);
     }
 
     for event in mouse_button_input_events.read() {
-        // info!("{:?}", event);
         match event {
             MouseButtonInput {
                 button: MouseButton::Left,
@@ -71,8 +70,5 @@ pub fn print_mouse_events_system(
     // }
 
     layouts.draw(&mut painter);
-
-    for element in layouts.iter() {
-        element.exc(&mut context);
-    }
+    layouts.exc_action(&mut context);
 }

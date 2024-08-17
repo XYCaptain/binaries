@@ -58,20 +58,21 @@ pub(crate) fn node_test_view() -> impl UIElement {
 pub(crate) fn node_panel() -> impl UIElement {
     hstack(
         (vstack
-        (
             (
-                header("header"),
-                vstack(
-                    (
-                        lable("title1"),
-                        lable("title2"),
-                        lable("title3"),
-                        lable("title4"),
-                    )
-                ).color(GRAY_900).title("panel").margin(Vec4::splat(2.)),
-            )
-        ).background_color(RED_900),
-        rectangle().color(GREEN).element_type(ElementType::Debug))
+                (
+                    header("header"),
+                    vstack(
+                        (
+                            lable("title1"),
+                            lable("title2"),
+                            lable("title3"),
+                            lable("title4"),
+                        )
+                    ).color(GRAY_900).title("panel").margin(Vec4::splat(2.)),
+                )
+            ),
+            rectangle().color(GREEN).element_type(ElementType::Debug)
+        )
     ).title("view")
 }
 

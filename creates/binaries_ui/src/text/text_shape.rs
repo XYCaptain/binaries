@@ -1,4 +1,4 @@
-use bevy::math::Vec2;
+use bevy::{math::{Vec2, Vec3}, prelude::{Mesh, Transform}, render::render_asset::RenderAssetUsages};
 use lyon::{path::FillRule, tessellation::{BuffersBuilder, FillOptions, FillTessellator, StrokeTessellator, VertexBuffers}};
 use rusttype::{Font, Point, Rect, Scale};
 use svg::node::element::Path;
@@ -51,6 +51,35 @@ impl TextShape {
             }
         }
         positions
+    }
+
+    pub fn bevy_mesh(&self) -> Mesh{
+        let mut tess = FillTessellator::new();
+
+        let tolerance = 0.005;
+        let fill_prim_id = 1;
+        let mut geometry: VertexBuffers<super::Vertexs, u16> = VertexBuffers::new();
+    
+        tess
+            .tessellate_path(
+                &self.xpath,
+                &FillOptions::tolerance(tolerance).with_fill_rule(FillRule::NonZero),
+                &mut BuffersBuilder::new(&mut geometry, WithId(fill_prim_id as u32)),
+            )
+        .unwrap();
+        
+        let mut positions = Vec::new();
+        let indices = bevy::render::mesh::Indices::U16(geometry.indices);
+        for vertice in geometry.vertices {
+            positions.push([vertice.position[0],-vertice.position[1],0.]);
+        }
+
+        let mut mesh = Mesh::new(bevy::render::mesh::PrimitiveTopology::TriangleList,RenderAssetUsages::default());
+        mesh.insert_indices(indices);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+        mesh.duplicate_vertices();
+        mesh.compute_flat_normals();
+        mesh
     }
 }
 

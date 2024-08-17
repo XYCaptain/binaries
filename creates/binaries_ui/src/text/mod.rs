@@ -1,9 +1,13 @@
+use bevy::asset::Assets;
 use bevy::ecs::system::SystemParam;
 use bevy::math::Vec3;
-use bevy::prelude::{ResMut, Resource};
+use bevy::prelude::{Commands, Query, ResMut, Resource, With};
 use bevy::render::mesh::Mesh;
 use bevy::render::render_asset::RenderAssetUsages;
+use bevy::sprite::ColorMaterial;
 use bevy::transform::components::Transform;
+use bevy::window::{PrimaryWindow, Window};
+use bevy_vector_shapes::prelude::ShapePainter;
 use lyon::path::math::point;
 use lyon::path::path::BuilderImpl;
 use lyon::path::{builder, Path};
@@ -22,8 +26,11 @@ pub struct Vertexs {
 }
 
 #[derive(SystemParam)]
-pub struct Config<'w> {
-   pub default_font: ResMut<'w,DefaultFont>
+pub struct Config<'w,'s> {
+   pub default_font: ResMut<'w,DefaultFont>,
+   pub meshes: ResMut<'w,Assets<Mesh>>,
+   pub materials: ResMut<'w,Assets<ColorMaterial>>,
+   pub window: Query<'w,'s,&'static Window, With<PrimaryWindow>>,
 }
 
 #[derive(Resource)]

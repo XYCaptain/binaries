@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::{Arc, RwLock}};
 
-use bevy::{color::palettes::{css::{BLACK, GREEN}, tailwind::{GREEN_200, RED_400}}, math::{Vec2, Vec3, Vec4, VectorSpace}, prelude::Resource, reflect::Reflect};
+use bevy::{asset::Assets, color::palettes::{css::{BLACK, GREEN}, tailwind::{GREEN_200, RED_400}}, math::{Vec2, Vec3, Vec4, VectorSpace}, prelude::{Commands, Mesh, ResMut, Resource}, reflect::Reflect};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{
     prelude::TaffyMaxContent, Dimension, JustifyContent, NodeId, Size, Style, TaffyTree, TraversePartialTree
@@ -49,8 +49,7 @@ impl UILayouts {
         }
     }
     
-    pub fn clear_node(&mut self, node: NodeId)
-    {
+    pub fn clear_node(&mut self, node: NodeId){
         let mut nodes_to_remove = Vec::new();
         self.traverse_node(node, &mut nodes_to_remove);
         for node_to_remove in nodes_to_remove{
@@ -98,10 +97,12 @@ impl UILayouts {
         child
     }
 
-    pub fn update_text(&mut self, config: Config) {
+    pub fn update_shape(&mut self, mut config: Config, mut commands: Commands) {
         for element in self.elements.values_mut() {
             if let Some(shape) = element.shape.as_ref() {
-                shape.write().unwrap().update(&config);
+                let mut shape = shape.write().unwrap();
+                shape.update(&mut config,&mut commands,element.position);
+                
             }
         }
     }
@@ -153,6 +154,12 @@ impl UILayouts {
         self.draw_tree(painter);
     }
 
+    pub fn exc_action(&mut self, context: &mut Context) {
+        for element in self.elements.values_mut() {
+            element.exc( context);
+        }
+    }
+
     fn draw_tree(&mut self, painter: &mut ShapePainter) {
         painter.set_translation(Vec3::ZERO);
         painter.set_color(BLACK);
@@ -169,8 +176,7 @@ impl UILayouts {
         painter.set_translation(Vec3::ZERO);
     }
 
-    fn traverse_node(&mut self,node: NodeId, nodes_to_remove: &mut Vec::<NodeId>)
-    {
+    fn traverse_node(&mut self,node: NodeId, nodes_to_remove: &mut Vec::<NodeId>) {
         let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
         nodes_to_remove.push(node);
         for child in children {
@@ -231,11 +237,6 @@ impl UILayouts {
             self.traverse_gen_debug_element(self.root, self.debug_root);
         }
     }
-
-    // fn traverse_push<K>(stack:Stack<K>)
-    // where K: ElementSet
-    // {
-    // }
 
     // to debug tree
     fn traverse_gen_debug_element(&mut self, node: NodeId, p_node:NodeId) {

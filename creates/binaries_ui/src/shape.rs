@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{color::palettes::tailwind::PINK_800, math::{Vec2, Vec3, Vec4, VectorSpace}};
+use bevy::{asset::Assets, color::{palettes::tailwind::PINK_800, Color, Srgba}, math::{Vec2, Vec3, Vec4, VectorSpace}, pbr::PbrBundle, prelude::{Commands, Mesh, ResMut, Transform}, sprite::{MaterialMesh2dBundle, Mesh2dHandle}};
 use bevy_vector_shapes::{prelude::ShapePainter, shapes::{DiscPainter, LinePainter, RectPainter, RegularPolygonPainter, TrianglePainter}};
 
 use crate::text::Config;
@@ -10,7 +10,7 @@ pub trait ShapeTrait: Send + Sync + 'static {
     // fn draw_backgroud(&self, painter: &mut ShapePainter);
     fn set_size(&mut self, size: Vec2);
     fn set_round(&mut self,round:Vec4);
-    fn update(&mut self,config: &Config);
+    fn update(&mut self,config: &mut Config, commands: &mut Commands, offset: Vec3);
 }
 
 #[derive(Clone,Debug)]
@@ -42,7 +42,9 @@ impl ShapeTrait for Rectangle {
         self.round = round;
     }
     
-    fn update(&mut self,config: &Config) {
+    fn update(&mut self,config: &mut Config, commands: &mut Commands, offset: Vec3){
+        let _ = offset;
+        let _ = commands;
         let _ = config;
     }
 }
@@ -87,7 +89,9 @@ impl ShapeTrait for Ngon {
         self.round = round;
     }
 
-    fn update(&mut self,config: &Config) {
+    fn update(&mut self,config: &mut Config, commands: &mut Commands, offset: Vec3){
+        let _ = offset;
+        let _ = commands;
         let _ = config;
     }
 }
@@ -122,7 +126,9 @@ impl ShapeTrait for Circle {
         self.round = round;
     }
 
-    fn update(&mut self,config: &Config) {
+    fn update(&mut self,config: &mut Config, commands: &mut Commands, offset: Vec3){
+        let _ = offset;
+        let _ = commands;
         let _ = config;
     }
 }
@@ -173,7 +179,9 @@ impl ShapeTrait for Curve {
         self.round = round;
     }
 
-    fn update(&mut self,config: &Config) {
+    fn update(&mut self,config: &mut Config, commands: &mut Commands, offset: Vec3){
+        let _ = offset;
+        let _ = commands;
         let _ = config;
     }
 }
@@ -185,7 +193,9 @@ pub struct Text {
     pub size:Vec2,
     pub font_size : f32,
     pub content_size:Vec2,
-    pub mesh: Vec<Vec<Vec2>>
+    pub mesh: Vec<Vec<Vec2>>,
+    pub entity: Option<bevy::ecs::entity::Entity>,
+    pub screen_position: Vec2,
 }
 
 impl Default for Text {
@@ -197,6 +207,8 @@ impl Default for Text {
             font_size: 1.,
             mesh:Vec::new(),
             content_size: Vec2::ZERO,
+            entity: None,
+            screen_position: Vec2::ZERO,
         }
     }
 }
@@ -212,10 +224,11 @@ impl Text {
 
 impl ShapeTrait for Text {
     fn draw(&self, painter: &mut ShapePainter) {
-       painter.translate(Vec3::new(-self.content_size.x * 0.5,self.content_size.y * 0.5,0.));
-       for p in &self.mesh {
-         painter.triangle(p[0],p[1],p[2]);
-       }
+        let _ = painter;
+    //    painter.translate(Vec3::new(-self.content_size.x * 0.5,self.content_size.y * 0.5,0.));
+    //    for p in &self.mesh {
+    //      painter.triangle(p[0],p[1],p[2]);
+    //    }
     }
     
     fn set_size(&mut self, size: Vec2) {
@@ -227,12 +240,23 @@ impl ShapeTrait for Text {
         let _ = round;
     }
 
-    fn update(&mut self,config: &Config) {
-        if self.mesh.len() == 0
-        {
+    fn update(&mut self,config: &mut Config, commands: &mut Commands, offset: Vec3){
+        if self.mesh.len() == 0 {
             let text =  crate::text::TextShape::builder().size(self.font_size).build(config.default_font.font(), &self.content);
             self.content_size = Vec2::new(text.witdh, text.height);
             self.mesh = text.mesh();
+            let text_meshes = Mesh2dHandle(config.meshes.add(text.bevy_mesh()));
+            let origin =  offset;
+            println!("text mesh: {:?}",offset);
+            commands.spawn((
+                MaterialMesh2dBundle {
+                    mesh: text_meshes.clone(),
+                    transform: Transform::from_xyz(origin.x -self.content_size.x * 0.5,origin.y + self.content_size.y * 0.5,1.),
+                    material: config.materials.add(Color::srgb(1., 1., 1.)),    
+                    ..Default::default()
+                },
+            ));
+            println!("text mesh: {:?}",self.content_size);
         }
     }
 }
