@@ -1,6 +1,6 @@
 
 
-use bevy::color::Srgba;
+use bevy::{color::Srgba, math::VectorSpace};
 use element::Element;
 
 
@@ -24,16 +24,21 @@ pub enum UIRenderMode {
     WithoutSelf
 }
 
-use crate::shape::{Circle, Ngon, Rectangle};
+use crate::shape::{Circle, Ngon, Rectangle, Text};
 
 pub fn element() -> Element
 {
-    Element::new().color(Srgba::WHITE)
+    Element::new().color(Srgba::ZERO)
 }
 
 pub fn debug_tree()-> Element
 {
     Element::new().title("debuge")
+}
+
+pub fn text(content:&str)->Element
+{
+    Element::new().color(Srgba::WHITE).shape(Text::new(content.to_string())).title("text content")
 }
 
 pub fn rectangle() -> Element

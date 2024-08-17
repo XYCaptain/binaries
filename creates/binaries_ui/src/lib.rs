@@ -4,19 +4,23 @@ pub mod components;
 pub mod utils;
 pub mod layout;
 pub mod shape;
+pub mod text;
 
-use bevy::{app::{App, Plugin, Startup, Update}, math::Vec3, prelude::{default, Camera, Camera2dBundle, Commands, Query, ResMut, With}, window::{PrimaryWindow, Window}};
-use bevy_vector_shapes::{prelude::ShapePainter, Shape2dPlugin};
+use bevy::{app::{App, Plugin, Startup, Update}, prelude::{default, Camera, Camera2dBundle, Commands}};
+use bevy_vector_shapes::ShapePlugin;
 use input::print_mouse_events_system;
 use layout::{Context, UILayouts};
+use text::DefaultFont;
+
 pub struct UIPlugin;
 
 impl Plugin for UIPlugin {
     fn build(&self, app: &mut App) {
         app
+        .insert_resource(DefaultFont::default())
         .insert_resource(Context::default())
         .insert_resource(UILayouts::new())
-        .add_plugins(Shape2dPlugin::default())
+        .add_plugins(ShapePlugin::default())
         .add_systems(
             Startup,
             (

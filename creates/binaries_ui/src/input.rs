@@ -1,7 +1,7 @@
 use bevy::{input::{gestures::{DoubleTapGesture, PinchGesture, RotationGesture}, mouse::{MouseButtonInput, MouseMotion, MouseWheel}, ButtonState}, log::info, math::Vec3, prelude::{EventReader, MouseButton, Query, ResMut, With}, window::{CursorMoved, PrimaryWindow, Window}};
 use bevy_vector_shapes::prelude::ShapePainter;
 
-use crate::{components::{element::Element, UIMouseState}, layout::{Context, UILayouts}, traits::UIElement};
+use crate::{components::UIMouseState, layout::{Context, UILayouts}, text::Config, traits::UIElement};
 
 pub fn print_mouse_events_system(
     mut painter: ShapePainter,
@@ -10,6 +10,7 @@ pub fn print_mouse_events_system(
     window_query: Query<&Window, With<PrimaryWindow>>,
     mut cursor_moved_events: EventReader<CursorMoved>,
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
+    config: Config
     // mut mouse_motion_events: EventReader<MouseMotion>,
     // mut mouse_wheel_events: EventReader<MouseWheel>,
     // mut pinch_gesture_events: EventReader<PinchGesture>,
@@ -18,12 +19,13 @@ pub fn print_mouse_events_system(
 ) {
     let window = window_query.get_single().unwrap();
     painter.origin = Some(Vec3::new(-window.width() * 0.5, window.height() * 0.5, 0.));
-    
+    painter.set_2d();
     if painter.origin.is_none() {
         return;
     }
 
     layouts.update((-100., -100.), &mut painter);
+    layouts.update_text(config);
     
     for event in cursor_moved_events.read() {
         // info!("{:?}", event);

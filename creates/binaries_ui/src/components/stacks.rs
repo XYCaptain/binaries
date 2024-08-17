@@ -1,13 +1,13 @@
 use std::clone;
 
 use crate::layout::UILayouts;
-use crate::shape::{Curve, ShapeTrait};
+use crate::shape::{Curve, Rectangle, ShapeTrait};
 use bevy::color::Srgba;
-use bevy::math::{Vec2, Vec3, Vec4};
+use bevy::math::{Vec2, Vec3, Vec4, VectorSpace};
 use bevy::utils::all_tuples;
 
 use super::element::{AlignItems, Element,AlignContent};
-use super::{UIMouseState, UIRenderMode};
+use super::{rectangle, UIMouseState, UIRenderMode};
 use crate::{layout::Context, traits::UIElement};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::Style;
@@ -17,21 +17,21 @@ pub fn vstack<K>(children: K) -> Stack<K>
 where
     K: ElementSet,
 {
-    stack(children).direction(FlexDirection::Column)
+    stack(children).direction(FlexDirection::Column).title("vstack")
 }
 
 pub fn hstack<K>(children: K) -> Stack<K>
 where
     K: ElementSet,
 {
-    stack(children).direction(FlexDirection::Row)
+    stack(children).direction(FlexDirection::Row).title("hstack")
 }
 
 pub fn stack<K>(children: K) -> Stack<K>
 where
     K: ElementSet,
 {
-    Stack::new(children).render_mode(UIRenderMode::WithoutSelf)
+    Stack::new(children).render_mode(UIRenderMode::WithoutSelf).shape(Rectangle::default()).color(Srgba::ZERO)
 }
 
 pub trait ElementSet {

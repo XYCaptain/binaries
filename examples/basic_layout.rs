@@ -56,7 +56,7 @@ fn ui_setup(mut layouts: ResMut<UILayouts>) {
                         .color(RED).margin(Vec4::new(20., 20., 30., 40.)).title("button2"),
                 )
             )
-            .color(Srgba::new(1.0, 0.0, 1.0, 0.8)).title("stack0"),
+            .color(Srgba::new(1.0, 0.0, 1.0, 0.8)),
             vstack(
                 (
                     rectangle()
@@ -67,11 +67,9 @@ fn ui_setup(mut layouts: ResMut<UILayouts>) {
                         .color(BROWN).margin(Vec4::new(20., 20., 30., 40.)).title("button4"),
                 )
             )
-            .color(Srgba::new(1.0, 1.0, 0.0, 0.8))
-            .title("stack2"),
+            .color(Srgba::new(1.0, 1.0, 0.0, 0.8)),
         )
     )
-    .title("stack3")
     .color(Srgba::new(0.0, 1.0, 1.0, 1.0));
 
 
@@ -89,8 +87,7 @@ fn ui_setup(mut layouts: ResMut<UILayouts>) {
                 ),
             )
             .round(50.)
-            .color(Srgba::new(1.0, 0.0, 1.0, 0.8))
-            .title("stack0"),
+            .color(Srgba::new(1.0, 0.0, 1.0, 0.8)),
             hstack(
                 (
                     rectangle()
@@ -103,10 +100,8 @@ fn ui_setup(mut layouts: ResMut<UILayouts>) {
             )
             .round(100.)
             .color(Srgba::new(1.0, 1.0, 0.0, 0.8))
-            .title("stack2"),
         )
     )
-    .title("stack3")
     .color(Srgba::new(0.0, 1.0, 1.0, 1.0));
 
    hstack((
@@ -114,13 +109,12 @@ fn ui_setup(mut layouts: ResMut<UILayouts>) {
             (
                 stk_first.clone().color(YELLOW_100).round(30.),
                 stk_second.clone().color(YELLOW_400).round(20.),
-                (||circle().size(Vec2::new(100., 100.)).title("1").color(YELLOW_400))(),
+                (||circle().size(Vec2::new(100., 100.)).title("circle").color(YELLOW_400))(),
             )
         ),
         rectangle().color(GREEN).element_type(ElementType::Debug)
         ),
     )
     .round(40.)
-    .title("stack4")
     .push_to_layout(&mut layouts);
 }

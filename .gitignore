@@ -15,3 +15,4 @@ Cargo.lock
 # os system file
 .DS_Store
 
+*.ttf

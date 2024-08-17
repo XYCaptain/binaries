@@ -31,24 +31,27 @@ pub fn node_test_view() -> impl UIElement
     .round(40.)
     .color(Srgba::new(0.8, 0.8, 0.8,0.8));
 
-    vstack((
-            node_element.clone(),
-            node_element.clone(),
-            hstack(vec![
+    hstack(
+        (vstack((
                 node_element.clone(),
                 node_element.clone(),
-            ]),
-            hstack(vec![
-                stack(vec![
-                    node_element.clone(),
-                    node_element.clone(),
-                ]),
                 hstack(vec![
                     node_element.clone(),
                     node_element.clone(),
                 ]),
-            ]),
-        ))
-    .horizontal_alignment(element::AlignContent::Center)
-    .size(Vec2::new(1000., 500.))
+                hstack(vec![
+                    stack(vec![
+                        node_element.clone(),
+                        node_element.clone(),
+                    ]),
+                    hstack(vec![
+                        node_element.clone(),
+                        node_element.clone(),
+                    ]),
+                ]),
+            ))
+            .horizontal_alignment(element::AlignContent::Center),
+            element().element_type(element::ElementType::Debug),
+        )
+    )
 }

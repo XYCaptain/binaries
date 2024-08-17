@@ -56,7 +56,7 @@ pub enum AlignContent {
 
 pub(crate) type Callback = Arc<dyn Fn(&mut Context) + Send + Sync + 'static>;
 pub(crate) type Renderback = Arc<dyn Fn(&mut ShapePainter) + Send + Sync + 'static>;
-pub(crate) type Shpe = Arc<RwLock<dyn ShapeTrait>>;
+pub(crate) type Shape = Arc<RwLock<dyn ShapeTrait>>;
 
 #[derive(Clone)]
 pub struct RenderAction {
@@ -68,7 +68,8 @@ impl Default for RenderAction {
     fn default() -> Self {
         let fun = Arc::new(
             |painter: &mut ShapePainter|{
-                let color = painter.color.to_srgba() * 0.8 + BLUE_VIOLET * 0.2;
+                let mut color = BLUE_VIOLET;
+                // color.alpha = 1.0;
                 painter.set_color(color);
             }
         );
@@ -117,7 +118,7 @@ pub struct Element {
     isready: bool,
     margin: Vec4,
     padding: Vec4,
-    shape: Option<Shpe>,
+    pub(crate) shape: Option<Shape>,
     action: IunputAction,
     render: RenderAction,
     draw: Option<Callback>,
@@ -281,6 +282,7 @@ impl UIElement for Element {
                 _ => {}
             }
         }
+        
         painter.set_translation(self.position);
 
         if let Some(shape) = self.shape.as_ref() {
