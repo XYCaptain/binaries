@@ -1,15 +1,14 @@
 use bevy::{
     color::{
-        palettes::{css::{BLACK, GRAY, GREEN, WHITE, WHITE_SMOKE}, tailwind::{GRAY_400, GRAY_900, GREEN_100, GREEN_900, RED_900}},
-        Srgba,
+        palettes::{css::{BLACK, DARK_GREEN, GRAY, GREEN, WHITE, WHITE_SMOKE, YELLOW}, tailwind::{GRAY_400, GRAY_500, GRAY_600, GRAY_900, GREEN_100, GREEN_200, GREEN_900, RED_900}}, Gray, Srgba
     },
-    math::{Vec2, Vec4, VectorSpace},
+    math::{Vec2, Vec3, Vec4, VectorSpace},
 };
 use binaries_ui::{
     components::{
         circle, element::ElementType, rectangle, stacks::{hstack, stack, vstack}, text, UIRenderMode
     },
-    shape::Ngon,
+    shape::{Ngon, Rectangle},
     traits::UIElement,
 };
 
@@ -57,47 +56,65 @@ pub(crate) fn node_test_view() -> impl UIElement {
 pub(crate) fn node_panel() -> impl UIElement {
     hstack(
         (hstack(
-            (
-                vstack
+            vstack
                 (
                     (
                         header("header"),
                         vstack(
                             (
-                                lable("title1"),
-                                lable("title2"),
-                                lable("title3"),
-                                lable("title4"),
+                                lable_input("title1"),
+                                lable_input("title2"),
+                                lable_output("title3"),
+                                lable_output("title4"),
                             )
                         ),
                     )
                 )
-                .color(WHITE)
-                .background_color(BLACK)
+                .horizontal_alignment(element::AlignItems::Center)
+                .background_color(GRAY_400).round(5.)
                 .title("panel")
-                .margin(Vec4::splat(10.))
-                .padding(Vec4::splat(20.)).round(5.)
-                ,
-            )
-        ).vertical_alignment(element::AlignItems::Center),
+        ).vertical_alignment(element::AlignItems::Center).margin(Vec4::splat(10.)),
         rectangle().color(GREEN).element_type(ElementType::Debug)
     )
     )
    .title("view")
 }
 
-fn lable(content:&str) -> impl UIElement + Clone {
+fn lable_input(content:&str) -> impl UIElement + Clone {
     hstack(
         (
-            circle().color(GREEN_100).size(Vec2::new(10., 10.)).self_vertical_alignment(element::AlignItems::Center),
-            text(content).size(Vec2::new(200., 20.)).background_color(Srgba::ZERO)
+            circle(5.).color(GREEN_200).self_vertical_alignment(element::AlignItems::Center),
+            hstack(
+                text(content)
+                    .size(Vec2::new(150., 20.))
+                    .margin(Vec4::new(20., 2., 20., 2.))
+                    .round(5.).background_color(GRAY)
+            )
         )
     )
-   .round(5.).margin(Vec4::splat(2.)).background_color(Srgba::ZERO).margin(Vec4::splat(2.)).padding(Vec4::splat(2.))
+   .background_color(GRAY_500)
+}
+
+fn lable_output(content:&str) -> impl UIElement + Clone {
+    hstack(
+        (
+            hstack(
+                text(content)
+                    .size(Vec2::new(150., 20.))
+                    .margin(Vec4::new(20., 2., 20., 2.))
+                    .round(5.).background_color(GRAY)
+            ),
+            circle(5.).color(GREEN_200).self_vertical_alignment(element::AlignItems::Center)
+        )
+    )
+   .background_color(GRAY_500)
 }
 
 fn header(content:&str) -> impl UIElement + Clone {
     hstack(
-        text(content).size(Vec2::new(200., 20.)).background_color(Srgba::ZERO).self_horizontal_alignment(element::AlignItems::Center)
-    ).title("header").background_color(Srgba::ZERO).margin(Vec4::splat(2.)).padding(Vec4::splat(2.))
+        text(content).size(Vec2::new(190., 20.))
+    )
+    .title("header")
+    .background_color(DARK_GREEN)
+    .round(5.)
 }

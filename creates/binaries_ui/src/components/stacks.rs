@@ -97,6 +97,11 @@ where
         self
     }
 
+    pub fn offset(mut self, offset: Vec3) -> Self {
+        self.element = self.element.offset(offset);
+        self
+    }
+    
     pub fn round(mut self, round:f32) -> Self {
         self.element = self.element.round(round);
         self

@@ -78,7 +78,7 @@ fn ui_setup(mut layouts: ResMut<UILayouts>) {
         (
             hstack(
                 (
-                    circle()
+                    circle(5.)
                         .size(Vec2::new(100., 100.))
                         .color(BLUE).margin(Vec4::new(10., 20., 30., 40.)).title("button1"),
                     ngon(5.5)
@@ -109,7 +109,7 @@ fn ui_setup(mut layouts: ResMut<UILayouts>) {
             (
                 stk_first.clone().color(YELLOW_100).round(30.),
                 stk_second.clone().color(YELLOW_400).round(20.),
-                (||circle().size(Vec2::new(100., 100.)).title("circle").color(YELLOW_400))(),
+                (||circle(5.).size(Vec2::new(100., 100.)).title("circle").color(YELLOW_400))(),
             )
         ),
         rectangle().color(GREEN).element_type(ElementType::Debug)

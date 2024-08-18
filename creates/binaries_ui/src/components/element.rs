@@ -52,7 +52,7 @@ pub enum AlignItems {
 //     SpaceAround,
 // }
 
-
+pub(crate) type Drawfunc = Arc<dyn Fn(&mut Element) + Send + Sync + 'static>;
 pub(crate) type Callback = Arc<dyn Fn(&mut Context) + Send + Sync + 'static>;
 pub(crate) type Renderback = Arc<dyn Fn(&mut ShapePainter) + Send + Sync + 'static>;
 pub(crate) type Shape = Arc<RwLock<dyn ShapeTrait>>;
@@ -110,18 +110,21 @@ pub struct Element {
     pub(crate) tile: String,
     color: Srgba,
     background_color: Srgba,
+    round: Vec4,
     size: Vec2,
     pub(crate) content_size: Vec2,
     action_state: UIMouseState,
     render_state: UIMouseState,
     render_block: UIRenderMode,
     pub(crate) position: Vec3,
+    pub(crate) offset: Vec3,
     isready: bool,
     margin: Vec4,
     padding: Vec4,
     pub(crate) shape: Option<Shape>,
     action: IunputAction,
     render: RenderAction,
+    drawfn: Option<Drawfunc>,
     draw: Option<Callback>,
     pub(crate) direction: FlexDirection,
     pub(crate) main_axis_alignment: AlignItems,
@@ -137,13 +140,16 @@ impl Element {
             tile: "element".to_string(),
             color: Srgba::ZERO,
             background_color: Srgba::ZERO,
+            round: Vec4::ZERO,
             size: Vec2::ZERO,
             content_size: Vec2::ZERO,
             position: Vec3::ZERO,
+            offset: Vec3::ZERO,
             action_state: UIMouseState::Release,
             isready: false,
             action: IunputAction::default(),
             render: RenderAction::default(),
+            drawfn: None,
             draw: None,
             shape: None,
             margin: Vec4::ZERO,
@@ -216,7 +222,8 @@ impl Element {
         self
     }
 
-    pub fn round(self, round: f32) -> Self {
+    pub fn round(mut self, round: f32) -> Self {
+        self.round = Vec4::splat(round);
         if let Some(shape) = self.shape.as_ref() {
             shape.write().unwrap().set_round(Vec4::splat(round));
         }
@@ -242,8 +249,18 @@ impl Element {
         self
     }
 
+    pub fn offset(mut self, offset: Vec3) -> Self {
+        self.offset = offset;
+        self
+    }
+    
     pub fn shape(mut self, shape: impl ShapeTrait) -> Self {
         self.shape = Some(Arc::new(RwLock::new(shape)));
+        self
+    }
+
+    pub fn drawfn(mut self, drawfn: impl Fn(&mut Element) + Send + Sync + 'static) -> Self {
+        self.drawfn = Some(Arc::new(drawfn));
         self
     }
 
@@ -356,19 +373,32 @@ impl UIElement for Element {
                 _ => {}
             }
         }
-        
-        painter.set_translation(self.position);
 
+        painter.set_translation(self.position);
         if let Some(shape) = self.shape.as_ref() {
             shape.read().unwrap().draw(painter);
         }
 
-        if self.background_color != Srgba::ZERO 
+        painter.corner_radii = self.round;
+
+        // content rect
+        if self.color != Srgba::ZERO 
         {
-            painter.set_color(self.color * 0.5);
-            painter.rect(self.size);
+            if let Some(shape) = self.shape.as_ref() {
+                painter.set_color(self.color * 0.5);
+                // painter.rect(shape.read().unwrap().get_size().unwrap());
+            }
+            else {
+                painter.set_color(self.color);
+                painter.rect(self.content_size);
+            }
+        }
+
+        // layout rect
+        if self.background_color != Srgba::ZERO {
+            painter.set_translation(self.position - self.offset);
             painter.set_color(self.background_color * 0.5);
-            painter.rect(self.content_size);
+            painter.rect(self.size);
         }
 
         painter.corner_radii = Vec4::ZERO;
@@ -512,15 +542,11 @@ impl UIElement for Element {
             origin.x + layout.location.x + self.size.x / 2. + inherit_origin.x,
             origin.y - self.size.y / 2. - layout.location.y - inherit_origin.y,
             0.,
-        );
+        ) + self.offset;
     }
-    
+
     /// update position and insection state
-    fn update_state(
-        &mut self,
-        cursor: (f32, f32),
-        origin: Vec3,
-    ) {
+    fn update_state(&mut self,cursor: (f32, f32),origin: Vec3) {
         let curo_screen = Vec2::new(
             cursor.0 + origin.x,
             cursor.1 - origin.y,

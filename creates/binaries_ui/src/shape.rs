@@ -9,6 +9,9 @@ pub trait ShapeTrait: Send + Sync + 'static {
     fn draw(&self, painter: &mut ShapePainter);
     // fn draw_backgroud(&self, painter: &mut ShapePainter);
     fn set_size(&mut self, size: Vec2);
+    fn get_size(&self) -> Option<Vec2> {
+        None
+    }
     fn set_round(&mut self,round:Vec4);
     fn update(&mut self,config: &mut Config, commands: &mut Commands, offset: Vec3);
 }
@@ -24,6 +27,15 @@ impl Default for Rectangle {
         Self {
             round: Vec4::splat(0.0),
             size: Vec2::splat(0.0)
+        }
+    }
+}
+
+impl Rectangle {
+    pub fn new(size:Vec2)->Self{
+        Self{
+            size,
+            ..Default::default()
         }
     }
 }
@@ -175,6 +187,8 @@ impl ShapeTrait for Curve {
         self.thickness = size.x.min(size.y) * 0.5;
     }
 
+  
+
     fn set_round(&mut self,round:Vec4) {
         self.round = round;
     }
@@ -234,6 +248,10 @@ impl ShapeTrait for Text {
     fn set_size(&mut self, size: Vec2) {
         self.size = size;
         self.font_size = size.y;
+    }
+
+    fn get_size(&self) -> Option<Vec2> {
+       Some(self.content_size)
     }
 
     fn set_round(&mut self,round:Vec4) {

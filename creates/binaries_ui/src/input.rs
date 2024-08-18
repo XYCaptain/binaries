@@ -1,4 +1,4 @@
-use bevy::{asset::Assets, input::{gestures::{DoubleTapGesture, PinchGesture, RotationGesture}, mouse::{MouseButtonInput, MouseMotion, MouseWheel}, ButtonState}, log::{info, tracing_subscriber::reload::Handle}, math::Vec3, prelude::{Commands, EventReader, Mesh, MouseButton, Query, ResMut, With}, window::{CursorMoved, PrimaryWindow, Window}};
+use bevy::{asset::Assets, input::{gestures::{DoubleTapGesture, PinchGesture, RotationGesture}, mouse::{MouseButtonInput, MouseMotion, MouseWheel}, ButtonState}, log::{info, tracing_subscriber::reload::Handle}, math::Vec3, prelude::{Commands, EventReader, Mesh, MouseButton, Query, Res, ResMut, With}, time::Time, window::{CursorMoved, PrimaryWindow, Window}};
 use bevy_vector_shapes::prelude::ShapePainter;
 
 use crate::{components::UIMouseState, layout::{Context, UILayouts}, text::Config};
@@ -11,7 +11,8 @@ pub fn print_mouse_events_system(
     mut cursor_moved_events: EventReader<CursorMoved>,
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
     config: Config,
-    commands: Commands
+    commands: Commands,
+    time: Res<Time>
     // mut mouse_motion_events: EventReader<MouseMotion>,
     // mut mouse_wheel_events: EventReader<MouseWheel>,
     // mut pinch_gesture_events: EventReader<PinchGesture>,
@@ -68,7 +69,6 @@ pub fn print_mouse_events_system(
     // for event in double_tap_gesture_events.read() {
     //     // layouts.update_input_state(UIMouse::Click);
     // }
-
     layouts.draw(&mut painter);
     layouts.exc_action(&mut context);
 }

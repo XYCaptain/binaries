@@ -1,5 +1,5 @@
 
-use bevy::{color::Srgba, math::VectorSpace};
+use bevy::{color::Srgba, math::{Vec4, VectorSpace}};
 use element::Element;
 
 pub mod element;
@@ -45,9 +45,9 @@ pub fn rectangle() -> Element
     Element::new().color(Srgba::WHITE).shape(Rectangle::default()).title("rectangle")
 }
 
-pub fn circle() -> Element
+pub fn circle(radius:f32) -> Element
 {
-    Element::new().color(Srgba::WHITE).shape(Circle::default()).title("circle")
+    Element::new().color(Srgba::WHITE).shape(Circle{ radius, ..Default::default() }).title("circle")
 }
 
 pub fn ngon(sides:f32) -> Element
