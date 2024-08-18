@@ -5,7 +5,7 @@ use crate::shape::{Rectangle, ShapeTrait};
 use bevy::color::Srgba;
 use bevy::math::{Vec2, Vec3, Vec4, VectorSpace};
 
-use super::element::{Element,AlignContent};
+use super::element::{AlignContent, AlignItems, Element};
 use super::element_set::ElementSet;
 use super::{UIMouseState, UIRenderMode};
 use crate::{layout::Context, traits::UIElement};
@@ -43,7 +43,7 @@ where
 {
     children: K,
     element: Element,
-    horizontal_alignment: AlignContent,
+    horizontal_alignment: AlignItems,
     vertical_alignment: AlignContent,
 }
 
@@ -56,7 +56,7 @@ where
         {
             children,
             element: Element::new(),
-            horizontal_alignment: AlignContent::Start,
+            horizontal_alignment: AlignItems::Start,
             vertical_alignment: AlignContent::Start,
         }
     }
@@ -93,6 +93,11 @@ where
 
     pub fn direction(mut self, direction:FlexDirection) -> Self {
         self.element = self.element.direction(direction);
+        self
+    }
+
+    pub fn padding(mut self, padding: Vec4) -> Self {
+        self.element = self.element.padding(padding);
         self
     }
 
@@ -141,13 +146,40 @@ where
         }
     }
 
-    pub fn horizontal_alignment(mut self,align:AlignContent)->Self{
-        self.horizontal_alignment = align;
+    pub fn horizontal_alignment(mut self,align:AlignItems)->Self{
+        match self.element.direction{
+            FlexDirection::Row => {
+                self.element.main_axis_alignment = align;
+            },
+            FlexDirection::Column => {
+                self.element.cors_axis_alignment = align;
+            }
+            FlexDirection::RowReverse => {
+                self.element.main_axis_alignment = align;
+            },
+            FlexDirection::ColumnReverse => {
+                self.element.cors_axis_alignment = align;
+            },
+        }
         self
     }
     
-    pub fn vertical_alignment(mut self,align:AlignContent)->Self{
-        self.vertical_alignment = align;
+    pub fn vertical_alignment(mut self,align:AlignItems)->Self{
+        // self.vertical_alignment = align;
+        match self.element.direction{
+            FlexDirection::Row => {
+                self.element.cors_axis_alignment = align;
+            },
+            FlexDirection::Column => {
+                self.element.main_axis_alignment = align;
+            }
+            FlexDirection::RowReverse => {
+                self.element.cors_axis_alignment = align;
+            },
+            FlexDirection::ColumnReverse => {
+                self.element.main_axis_alignment = align;
+            },
+        }
         self
     }
 }
@@ -157,20 +189,7 @@ where
     K: ElementSet + Send + Sync + 'static
 {
     fn style(&self) -> Style {
-        Style{
-            justify_content: match self.horizontal_alignment {
-                AlignContent::Start => Some(taffy::AlignContent::Start),
-                AlignContent::End => Some(taffy::AlignContent::End),
-                AlignContent::FlexStart => Some(taffy::AlignContent::FlexStart),
-                AlignContent::FlexEnd => Some(taffy::AlignContent::FlexEnd),
-                AlignContent::Center => Some(taffy::AlignContent::Center),
-                AlignContent::Stretch => Some(taffy::AlignContent::Stretch),
-                AlignContent::SpaceBetween => Some(taffy::AlignContent::SpaceAround),
-                AlignContent::SpaceEvenly => Some(taffy::AlignContent::SpaceEvenly),
-                AlignContent::SpaceAround => Some(taffy::AlignContent::SpaceAround)
-            },
-            ..self.element.style()
-        }
+        self.element.style()
     }
 
     fn draw(&self, painter: &mut ShapePainter) {

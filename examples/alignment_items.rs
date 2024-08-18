@@ -19,28 +19,11 @@ fn main() {
         .add_plugins((DefaultPlugins,UIPlugin))
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
-        .add_systems(
-            Startup,
-            (
-                ui_setup,
-                setup.after(ui_setup),
-            ),
-        )
+        .add_systems(Startup,ui_setup)
         .run();
 }
 
-fn setup(mut commands: Commands) {
-    commands.spawn(Camera3dBundle {
-        camera: Camera {
-            order: 1,
-            ..default()
-        },
-        transform: Transform::from_xyz(-20.0, 20., 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
-}
-
 fn ui_setup(mut layouts: ResMut<UILayouts>) {
-    views::node_test::node_panel().add_to_layout(&mut layouts);
+    views::layout_gallery::node_panel().add_to_layout(&mut layouts);
     layouts.print_tree();
 }

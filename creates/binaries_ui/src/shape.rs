@@ -224,11 +224,11 @@ impl Text {
 
 impl ShapeTrait for Text {
     fn draw(&self, painter: &mut ShapePainter) {
-        let _ = painter;
-    //    painter.translate(Vec3::new(-self.content_size.x * 0.5,self.content_size.y * 0.5,0.));
-    //    for p in &self.mesh {
-    //      painter.triangle(p[0],p[1],p[2]);
-    //    }
+        painter.rect(self.size);
+        //    painter.translate(Vec3::new(-self.content_size.x * 0.5,self.content_size.y * 0.5,0.));
+        //    for p in &self.mesh {
+        //      painter.triangle(p[0],p[1],p[2]);
+        //    }
     }
     
     fn set_size(&mut self, size: Vec2) {
@@ -241,22 +241,26 @@ impl ShapeTrait for Text {
     }
 
     fn update(&mut self,config: &mut Config, commands: &mut Commands, offset: Vec3){
-        if self.mesh.len() == 0 {
-            let text =  crate::text::TextShape::builder().size(self.font_size).build(config.default_font.font(), &self.content);
-            self.content_size = Vec2::new(text.witdh, text.height);
-            self.mesh = text.mesh();
-            let text_meshes = Mesh2dHandle(config.meshes.add(text.bevy_mesh()));
-            let origin =  offset;
-            println!("text mesh: {:?}",offset);
-            commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: text_meshes.clone(),
-                    transform: Transform::from_xyz(origin.x -self.content_size.x * 0.5,origin.y + self.content_size.y * 0.5,1.),
-                    material: config.materials.add(Color::srgb(1., 1., 1.)),    
-                    ..Default::default()
-                },
-            ));
-            println!("text mesh: {:?}",self.content_size);
+        match self.entity {
+            Some(entity_id) => {
+                commands.entity(entity_id).insert(
+                    Transform::from_xyz(offset.x -self.content_size.x * 0.5,offset.y + self.content_size.y * 0.5,1.)
+                );
+            },
+            None => {
+                let text =  crate::text::TextShape::builder().size(self.font_size).build(config.default_font.font(), &self.content);
+                self.content_size = Vec2::new(text.witdh, text.height);
+                let text_meshes = Mesh2dHandle(config.meshes.add(text.bevy_mesh()));
+                let origin =  offset;
+                self.entity = Some(commands.spawn((
+                    MaterialMesh2dBundle {
+                        mesh: text_meshes.clone(),
+                        transform: Transform::from_xyz(origin.x -self.content_size.x * 0.5,origin.y + self.content_size.y * 0.5,1.),
+                        material: config.materials.add(Color::srgb(1., 1., 1.)),    
+                        ..Default::default()
+                    },
+                )).id());
+            },
         }
     }
 }

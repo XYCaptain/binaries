@@ -113,7 +113,7 @@ impl UILayouts {
             self.gen_debug_elements_tree();
         }
         
-        //setup win size
+        //setup win size for root
         {
             let old_style = self.taffy.style(self.root).expect("");
             self.taffy.set_style(self.root, Style{
@@ -123,12 +123,13 @@ impl UILayouts {
                 },
                 ..old_style.clone()
             }).expect("msg");
+            //println!("root style:{:?}",self.taffy.style(self.root).expect("").size);
         }
 
-        //setup win size
+        //setup win size for content_node
         {
             let content_node = self.taffy.get_child_id(self.root, 0);
-            let old_style = self.taffy.style(self.root).expect("");
+            let old_style = self.taffy.style(content_node).expect("");
             self.taffy.set_style(content_node, Style{
                 size:Size {
                     width: Dimension::Length(painter.origin.unwrap().x * -2.),
@@ -136,6 +137,7 @@ impl UILayouts {
                 },
                 ..old_style.clone()
             }).expect("msg");
+            //println!("root style:{:?}",self.taffy.style(content_node).expect("").size);
         }
         
         self.taffy.compute_layout(self.root, taffy::Size::MAX_CONTENT).expect("");
@@ -259,7 +261,7 @@ impl UILayouts {
                 .color(RED_400)
                 .direction(FlexDirection::Column);
             v_node = self.push_element_with_id(v_stack, p_node);
-            self_element = self_element.horizontal_alignment(AlignItems::Center).vertical_alignment(AlignItems::Center);
+            self_element = self_element.self_horizontal_alignment(AlignItems::Center).self_vertical_alignment(AlignItems::Center);
         }
 
         let self_node = self.push_element_with_id(self_element, v_node);
@@ -267,7 +269,7 @@ impl UILayouts {
 
         let tile = self.elements.get(&node).unwrap().tile.as_str();
 
-        let text_content = text(tile).size(Vec2::new(100., 20.)).horizontal_alignment(AlignItems::Center).vertical_alignment(AlignItems::Center);
+        let text_content = text(tile).size(Vec2::new(100., 20.)).self_horizontal_alignment(AlignItems::Center).self_vertical_alignment(AlignItems::Center);
         self.push_element_with_id(text_content, self_node);
 
         if children.len() ==  0{

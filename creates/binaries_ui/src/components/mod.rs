@@ -37,22 +37,22 @@ pub fn debug_tree()-> Element
 
 pub fn text(content:&str)->Element
 {
-    Element::new().color(Srgba::WHITE).shape(Text::new(content.to_string())).title("text content")
+    Element::new().color(Srgba::ZERO).shape(Text::new(content.to_string())).title("text content")
 }
 
 pub fn rectangle() -> Element
 {
-    Element::new().color(Srgba::WHITE).shape(Rectangle::default())
+    Element::new().color(Srgba::WHITE).shape(Rectangle::default()).title("rectangle")
 }
 
 pub fn circle() -> Element
 {
-    Element::new().color(Srgba::WHITE).shape(Circle::default())
+    Element::new().color(Srgba::WHITE).shape(Circle::default()).title("circle")
 }
 
 pub fn ngon(sides:f32) -> Element
 {
-    Element::new().color(Srgba::WHITE).shape(Ngon::default().sides(sides))
+    Element::new().color(Srgba::WHITE).shape(Ngon::default().sides(sides)).title("ngon")
 }
 
 #[cfg(test)]

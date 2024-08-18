@@ -1,13 +1,13 @@
 use bevy::{
     color::{
-        palettes::{css::{GREEN, WHITE_SMOKE}, tailwind::{GRAY_400, GRAY_900, GREEN_900, RED_900}},
+        palettes::{css::{BLACK, GRAY, GREEN, WHITE, WHITE_SMOKE}, tailwind::{GRAY_400, GRAY_900, GREEN_100, GREEN_900, RED_900}},
         Srgba,
     },
-    math::{Vec2, Vec4},
+    math::{Vec2, Vec4, VectorSpace},
 };
 use binaries_ui::{
     components::{
-        element::ElementType, rectangle, stacks::{hstack, stack, vstack}, text, UIRenderMode
+        circle, element::ElementType, rectangle, stacks::{hstack, stack, vstack}, text, UIRenderMode
     },
     shape::Ngon,
     traits::UIElement,
@@ -49,42 +49,70 @@ pub(crate) fn node_test_view() -> impl UIElement {
                 stack(vec![node_element.clone(), node_element.clone()]),
                 hstack(vec![node_element.clone(), node_element.clone()]),
             ]),
-        ))
-        .horizontal_alignment(element::AlignContent::Center),
+        )),
         element().element_type(element::ElementType::Debug),
     ))
 }
 
 pub(crate) fn node_panel() -> impl UIElement {
     hstack(
-        (vstack
+        (hstack(
             (
-                (
-                    header("header"),
-                    vstack(
-                        (
-                            lable("title1"),
-                            lable("title2"),
-                            lable("title3"),
-                            lable("title4"),
-                        )
-                    ).color(GRAY_900).title("panel").margin(Vec4::splat(2.)),
-                )
-            ),
-            rectangle().color(GREEN).element_type(ElementType::Debug)
-        )
-    ).title("view")
+                rectangle()
+                    .size(Vec2::new(200., 200.))
+                    .padding(Vec4::splat(20.))
+                    .color(WHITE)
+                    .round(10.)
+                    .margin(Vec4::splat(10.))
+                    .background_color(BLACK)
+                    .vertical_alignment(element::AlignItems::Center),
+                rectangle()
+                    .size(Vec2::new(200., 400.))
+                    .padding(Vec4::splat(20.))
+                    .color(WHITE)
+                    .round(10.)
+                    .margin(Vec4::splat(10.))
+                    .background_color(BLACK),
+                // vstack
+                // (
+                //     (
+                //         header("header"),
+                //         vstack(
+                //             (
+                //                 lable("title1"),
+                //                 lable("title2"),
+                //                 lable("title3"),
+                //                 lable("title4"),
+                //             )
+                //         ),
+                //     )
+                // )
+                // .color(WHITE)
+                // .background_color(BLACK)
+                // .title("panel")
+                // .margin(Vec4::splat(10.))
+                // .padding(Vec4::splat(20.)).round(5.)
+                // ,
+            )
+        ).vertical_alignment(element::AlignItems::Center),
+        rectangle().color(GREEN).element_type(ElementType::Debug)
+    )
+    )
+   .title("view")
 }
 
 fn lable(content:&str) -> impl UIElement + Clone {
     hstack(
-        text(content).size(Vec2::new(200., 20.))
+        (
+            circle().color(GREEN_100).size(Vec2::new(10., 10.)),
+            text(content).size(Vec2::new(200., 20.)).background_color(Srgba::ZERO)
+        )
     )
-    .color(GRAY_400).round(5.).margin(Vec4::splat(2.))
+   .round(5.).margin(Vec4::splat(2.)).background_color(Srgba::ZERO).margin(Vec4::splat(2.)).padding(Vec4::splat(2.))
 }
 
 fn header(content:&str) -> impl UIElement + Clone {
     hstack(
-        text(content).size(Vec2::new(200., 20.))
-    ).color(GREEN_900).title("header")
+        text(content).size(Vec2::new(200., 20.)).background_color(Srgba::ZERO)
+    ).title("header").background_color(Srgba::ZERO).margin(Vec4::splat(2.)).padding(Vec4::splat(2.))
 }

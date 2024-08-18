@@ -3,7 +3,7 @@ use std::sync::{Arc, RwLock};
 use super::{UIMouseState, UIRenderMode};
 use crate::shape::ShapeTrait;
 use crate::{layout::Context, traits::UIElement};
-use bevy::color::palettes::css::BLUE_VIOLET;
+use bevy::color::palettes::css::{BLACK, BLUE_VIOLET};
 use bevy::color::palettes::tailwind::RED_900;
 use bevy::math::{Quat, Vec3, Vec4, VectorSpace};
 use bevy::{color::Srgba,math::Vec2};
@@ -122,9 +122,11 @@ pub struct Element {
     action: IunputAction,
     render: RenderAction,
     draw: Option<Callback>,
-    direction: FlexDirection,
-    horizontal_alignment: AlignItems,
-    vertical_alignment: AlignItems,
+    pub(crate) direction: FlexDirection,
+    pub(crate) main_axis_alignment: AlignItems,
+    pub(crate) cors_axis_alignment: AlignItems,
+    pub(crate) self_main_axis_alignment: AlignItems,
+    pub(crate) self_cors_axis_alignment: AlignItems,
     element_type: ElementType
 }
 
@@ -149,8 +151,10 @@ impl Element {
             direction: FlexDirection::Row,
             render_state: UIMouseState::Release,
             render_block: UIRenderMode::Individual,
-            horizontal_alignment: AlignItems::Start,
-            vertical_alignment: AlignItems::Start,
+            main_axis_alignment: AlignItems::Start,
+            cors_axis_alignment: AlignItems::Start,
+            self_main_axis_alignment: AlignItems::Start,
+            self_cors_axis_alignment: AlignItems::Start,
             element_type: ElementType::Content
         }
     }
@@ -253,12 +257,74 @@ impl Element {
     }
 
     pub fn horizontal_alignment(mut self,align:AlignItems)->Self{
-        self.horizontal_alignment = align;
+        match self.direction{
+            FlexDirection::Row => {
+                self.main_axis_alignment = align;
+            },
+            FlexDirection::Column => {
+                self.cors_axis_alignment = align;
+            }
+            FlexDirection::RowReverse => {
+                self.main_axis_alignment = align;
+            },
+            FlexDirection::ColumnReverse => {
+                self.cors_axis_alignment = align;
+            },
+        }
         self
     }
 
     pub fn vertical_alignment(mut self,align:AlignItems)->Self{
-        self.vertical_alignment = align;
+        match self.direction{
+            FlexDirection::Row => {
+                self.cors_axis_alignment = align;
+            },
+            FlexDirection::Column => {
+                self.main_axis_alignment = align;
+            }
+            FlexDirection::RowReverse => {
+                self.cors_axis_alignment = align;
+            },
+            FlexDirection::ColumnReverse => {
+                self.main_axis_alignment = align;
+            },
+        }
+        self
+    }
+
+    pub fn self_horizontal_alignment(mut self,align:AlignItems)->Self{
+        match self.direction{
+            FlexDirection::Row => {
+                self.self_main_axis_alignment = align;
+            },
+            FlexDirection::Column => {
+                self.self_cors_axis_alignment = align;
+            }
+            FlexDirection::RowReverse => {
+                self.self_main_axis_alignment = align;
+            },
+            FlexDirection::ColumnReverse => {
+                self.self_cors_axis_alignment = align;
+            },
+        }
+        self
+    }
+
+    pub fn self_vertical_alignment(mut self,align:AlignItems)->Self{
+        match self.direction{
+            FlexDirection::Row => {
+                self.self_cors_axis_alignment = align;
+            },
+            FlexDirection::Column => {
+                self.self_main_axis_alignment = align;
+            }
+            FlexDirection::RowReverse => {
+                self.self_cors_axis_alignment = align;
+            },
+            FlexDirection::ColumnReverse => {
+                self.self_main_axis_alignment = align;
+            },
+        }
         self
     }
 
@@ -298,8 +364,10 @@ impl UIElement for Element {
 
         if self.background_color != Srgba::ZERO 
         {
-            painter.set_color(self.background_color);
+            painter.set_color(self.color * 0.5);
             painter.rect(self.size);
+            painter.set_color(self.background_color * 0.5);
+            painter.rect(self.content_size);
         }
 
         painter.corner_radii = Vec4::ZERO;
@@ -355,23 +423,50 @@ impl UIElement for Element {
                 FlexDirection::RowReverse => taffy::FlexDirection::RowReverse,
                 FlexDirection::ColumnReverse => taffy::FlexDirection::ColumnReverse,
             },
-            align_self: match self.horizontal_alignment {
-                AlignItems::Start => Some(taffy::AlignItems::Start),
-                AlignItems::End => Some(taffy::AlignItems::End),
-                AlignItems::FlexStart => Some(taffy::AlignItems::FlexStart),
-                AlignItems::FlexEnd => Some(taffy::AlignItems::FlexEnd),
-                AlignItems::Center => Some(taffy::AlignItems::Center),
-                AlignItems::Baseline => Some(taffy::AlignItems::Baseline),
-                AlignItems::Stretch => Some(taffy::AlignItems::Stretch),
+            align_items: match self.cors_axis_alignment {
+                AlignItems::Start => Some(taffy::AlignSelf::Start),
+                AlignItems::End => Some(taffy::AlignSelf::End),
+                AlignItems::FlexStart => Some(taffy::AlignSelf::FlexStart),
+                AlignItems::FlexEnd => Some(taffy::AlignSelf::FlexEnd),
+                AlignItems::Center => Some(taffy::AlignSelf::Center),
+                AlignItems::Baseline => Some(taffy::AlignSelf::Baseline),
+                AlignItems::Stretch => Some(taffy::AlignSelf::Stretch),
             },
-            justify_self: match self.vertical_alignment {
-                AlignItems::Start => Some(taffy::JustifySelf::Start),
-                AlignItems::End => Some(taffy::JustifySelf::End),
-                AlignItems::FlexStart => Some(taffy::JustifySelf::FlexStart),
-                AlignItems::FlexEnd => Some(taffy::JustifySelf::FlexEnd),
-                AlignItems::Center => Some(taffy::JustifySelf::Center),
-                AlignItems::Baseline => Some(taffy::JustifySelf::Baseline),
-                AlignItems::Stretch => Some(taffy::JustifySelf::Stretch),
+            justify_content: match self.main_axis_alignment {
+                AlignItems::Start => Some(taffy::JustifyContent::Start),
+                AlignItems::End => Some(taffy::JustifyContent::End),
+                AlignItems::FlexStart => Some(taffy::JustifyContent::FlexStart),
+                AlignItems::FlexEnd => Some(taffy::JustifyContent::FlexEnd),
+                AlignItems::Center => Some(taffy::JustifyContent::Center),
+                AlignItems::Baseline => Some(taffy::JustifyContent::Center),
+                AlignItems::Stretch => Some(taffy::JustifyContent::Stretch),
+            },
+            align_content: match self.cors_axis_alignment {
+                AlignItems::Start => Some(taffy::AlignContent::Start),
+                AlignItems::End => Some(taffy::AlignContent::End),
+                AlignItems::FlexStart => Some(taffy::AlignContent::FlexStart),
+                AlignItems::FlexEnd => Some(taffy::AlignContent::FlexEnd),
+                AlignItems::Center => Some(taffy::AlignContent::Center),
+                AlignItems::Baseline => Some(taffy::AlignContent::Center),
+                AlignItems::Stretch => Some(taffy::AlignContent::Stretch),
+            },
+            align_self: match self.self_cors_axis_alignment {
+                AlignItems::Start => Some(taffy::AlignSelf::Start),
+                AlignItems::End => Some(taffy::AlignSelf::End),
+                AlignItems::FlexStart => Some(taffy::AlignSelf::FlexStart),
+                AlignItems::FlexEnd => Some(taffy::AlignSelf::FlexEnd),
+                AlignItems::Center => Some(taffy::AlignSelf::Center),
+                AlignItems::Baseline => Some(taffy::AlignSelf::Baseline),
+                AlignItems::Stretch => Some(taffy::AlignSelf::Stretch),
+            },
+            justify_self: match self.self_main_axis_alignment {
+                AlignItems::Start => Some(taffy::AlignSelf::Start),
+                AlignItems::End => Some(taffy::AlignSelf::End),
+                AlignItems::FlexStart => Some(taffy::AlignSelf::FlexStart),
+                AlignItems::FlexEnd => Some(taffy::AlignSelf::FlexEnd),
+                AlignItems::Center => Some(taffy::AlignSelf::Center),
+                AlignItems::Baseline => Some(taffy::AlignSelf::Baseline),
+                AlignItems::Stretch => Some(taffy::AlignSelf::Stretch),
             },
             ..Default::default()
         };
