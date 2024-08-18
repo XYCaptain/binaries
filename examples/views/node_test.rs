@@ -58,41 +58,26 @@ pub(crate) fn node_panel() -> impl UIElement {
     hstack(
         (hstack(
             (
-                rectangle()
-                    .size(Vec2::new(200., 200.))
-                    .padding(Vec4::splat(20.))
-                    .color(WHITE)
-                    .round(10.)
-                    .margin(Vec4::splat(10.))
-                    .background_color(BLACK)
-                    .vertical_alignment(element::AlignItems::Center),
-                rectangle()
-                    .size(Vec2::new(200., 400.))
-                    .padding(Vec4::splat(20.))
-                    .color(WHITE)
-                    .round(10.)
-                    .margin(Vec4::splat(10.))
-                    .background_color(BLACK),
-                // vstack
-                // (
-                //     (
-                //         header("header"),
-                //         vstack(
-                //             (
-                //                 lable("title1"),
-                //                 lable("title2"),
-                //                 lable("title3"),
-                //                 lable("title4"),
-                //             )
-                //         ),
-                //     )
-                // )
-                // .color(WHITE)
-                // .background_color(BLACK)
-                // .title("panel")
-                // .margin(Vec4::splat(10.))
-                // .padding(Vec4::splat(20.)).round(5.)
-                // ,
+                vstack
+                (
+                    (
+                        header("header"),
+                        vstack(
+                            (
+                                lable("title1"),
+                                lable("title2"),
+                                lable("title3"),
+                                lable("title4"),
+                            )
+                        ),
+                    )
+                )
+                .color(WHITE)
+                .background_color(BLACK)
+                .title("panel")
+                .margin(Vec4::splat(10.))
+                .padding(Vec4::splat(20.)).round(5.)
+                ,
             )
         ).vertical_alignment(element::AlignItems::Center),
         rectangle().color(GREEN).element_type(ElementType::Debug)
@@ -104,7 +89,7 @@ pub(crate) fn node_panel() -> impl UIElement {
 fn lable(content:&str) -> impl UIElement + Clone {
     hstack(
         (
-            circle().color(GREEN_100).size(Vec2::new(10., 10.)),
+            circle().color(GREEN_100).size(Vec2::new(10., 10.)).self_vertical_alignment(element::AlignItems::Center),
             text(content).size(Vec2::new(200., 20.)).background_color(Srgba::ZERO)
         )
     )
@@ -113,6 +98,6 @@ fn lable(content:&str) -> impl UIElement + Clone {
 
 fn header(content:&str) -> impl UIElement + Clone {
     hstack(
-        text(content).size(Vec2::new(200., 20.)).background_color(Srgba::ZERO)
+        text(content).size(Vec2::new(200., 20.)).background_color(Srgba::ZERO).self_horizontal_alignment(element::AlignItems::Center)
     ).title("header").background_color(Srgba::ZERO).margin(Vec4::splat(2.)).padding(Vec4::splat(2.))
 }

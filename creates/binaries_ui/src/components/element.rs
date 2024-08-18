@@ -36,20 +36,21 @@ pub enum AlignItems {
     Center,
     Baseline,
     Stretch,
+    NotSet
 }
 
-#[derive(Clone, Debug)]
-pub enum AlignContent {
-    Start,
-    End,
-    FlexStart,
-    FlexEnd,
-    Center,
-    Stretch,
-    SpaceBetween,
-    SpaceEvenly,
-    SpaceAround,
-}
+// #[derive(Clone, Debug)]
+// pub enum AlignContent {
+//     Start,
+//     End,
+//     FlexStart,
+//     FlexEnd,
+//     Center,
+//     Stretch,
+//     SpaceBetween,
+//     SpaceEvenly,
+//     SpaceAround,
+// }
 
 
 pub(crate) type Callback = Arc<dyn Fn(&mut Context) + Send + Sync + 'static>;
@@ -153,8 +154,8 @@ impl Element {
             render_block: UIRenderMode::Individual,
             main_axis_alignment: AlignItems::Start,
             cors_axis_alignment: AlignItems::Start,
-            self_main_axis_alignment: AlignItems::Start,
-            self_cors_axis_alignment: AlignItems::Start,
+            self_main_axis_alignment: AlignItems::NotSet,
+            self_cors_axis_alignment: AlignItems::NotSet,
             element_type: ElementType::Content
         }
     }
@@ -304,7 +305,7 @@ impl Element {
                 self.self_main_axis_alignment = align;
             },
             FlexDirection::ColumnReverse => {
-                self.self_cors_axis_alignment = align;
+                self.cors_axis_alignment = align;
             },
         }
         self
@@ -431,6 +432,7 @@ impl UIElement for Element {
                 AlignItems::Center => Some(taffy::AlignSelf::Center),
                 AlignItems::Baseline => Some(taffy::AlignSelf::Baseline),
                 AlignItems::Stretch => Some(taffy::AlignSelf::Stretch),
+                AlignItems::NotSet => Some(taffy::AlignSelf::Start),
             },
             justify_content: match self.main_axis_alignment {
                 AlignItems::Start => Some(taffy::JustifyContent::Start),
@@ -440,6 +442,7 @@ impl UIElement for Element {
                 AlignItems::Center => Some(taffy::JustifyContent::Center),
                 AlignItems::Baseline => Some(taffy::JustifyContent::Center),
                 AlignItems::Stretch => Some(taffy::JustifyContent::Stretch),
+                AlignItems::NotSet => Some(taffy::JustifyContent::Start),
             },
             align_content: match self.cors_axis_alignment {
                 AlignItems::Start => Some(taffy::AlignContent::Start),
@@ -449,6 +452,7 @@ impl UIElement for Element {
                 AlignItems::Center => Some(taffy::AlignContent::Center),
                 AlignItems::Baseline => Some(taffy::AlignContent::Center),
                 AlignItems::Stretch => Some(taffy::AlignContent::Stretch),
+                AlignItems::NotSet => Some(taffy::AlignContent::Start),
             },
             align_self: match self.self_cors_axis_alignment {
                 AlignItems::Start => Some(taffy::AlignSelf::Start),
@@ -458,6 +462,7 @@ impl UIElement for Element {
                 AlignItems::Center => Some(taffy::AlignSelf::Center),
                 AlignItems::Baseline => Some(taffy::AlignSelf::Baseline),
                 AlignItems::Stretch => Some(taffy::AlignSelf::Stretch),
+                AlignItems::NotSet => None,
             },
             justify_self: match self.self_main_axis_alignment {
                 AlignItems::Start => Some(taffy::AlignSelf::Start),
@@ -467,6 +472,7 @@ impl UIElement for Element {
                 AlignItems::Center => Some(taffy::AlignSelf::Center),
                 AlignItems::Baseline => Some(taffy::AlignSelf::Baseline),
                 AlignItems::Stretch => Some(taffy::AlignSelf::Stretch),
+                AlignItems::NotSet => None,
             },
             ..Default::default()
         };

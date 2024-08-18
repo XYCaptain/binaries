@@ -5,7 +5,7 @@ use crate::shape::{Rectangle, ShapeTrait};
 use bevy::color::Srgba;
 use bevy::math::{Vec2, Vec3, Vec4, VectorSpace};
 
-use super::element::{AlignContent, AlignItems, Element};
+use super::element::{ AlignItems, Element};
 use super::element_set::ElementSet;
 use super::{UIMouseState, UIRenderMode};
 use crate::{layout::Context, traits::UIElement};
@@ -43,8 +43,6 @@ where
 {
     children: K,
     element: Element,
-    horizontal_alignment: AlignItems,
-    vertical_alignment: AlignContent,
 }
 
 impl<K> Stack<K>
@@ -56,8 +54,6 @@ where
         {
             children,
             element: Element::new(),
-            horizontal_alignment: AlignItems::Start,
-            vertical_alignment: AlignContent::Start,
         }
     }
 
