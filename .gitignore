@@ -16,3 +16,5 @@ Cargo.lock
 .DS_Store
 
 *.ttf
+
+db_path/

@@ -1,8 +1,10 @@
+use std::sync::RwLockWriteGuard;
+
 use bevy::math::Vec3;
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{Dimension, Layout, Size, Style};
 
-use crate::{components::{element::{Element, ElementType}, UIMouseState, UIRenderMode}, layout::{Context, UILayouts}};
+use crate::{components::{element::{Element, ElementType}, UIMouseState, UIRenderMode}, context::MemState, layout::UILayouts};
 
 
 
@@ -26,7 +28,7 @@ pub trait UIElement: Sync + Send + 'static {
 
     fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3);
 
-    fn update_state(&mut self, cursor: (f32, f32), origin:Vec3);
+    fn update_render_state(&mut self, cursor: (f32, f32), origin:Vec3);
 
     fn get_input_state(&mut self)-> UIMouseState;
 
@@ -38,7 +40,7 @@ pub trait UIElement: Sync + Send + 'static {
 
     fn block_render_state(&mut self)-> UIRenderMode;
 
-    fn exc(&mut self, ctx:&mut Context);
+    fn exc(&mut self, ctx:&mut RwLockWriteGuard<MemState>);
 
     fn get_z_order(&self) -> i32 {0}
 

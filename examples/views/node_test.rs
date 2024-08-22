@@ -6,7 +6,7 @@ use bevy::{
 };
 use binaries_ui::{
     components::{
-        circle, element::ElementType, rectangle, stacks::{hstack, stack, vstack}, text, UIRenderMode
+        circle, element::ElementType, rectangle, stacks::{hstack, stack, vstack}, text, UIMouseState, UIRenderMode
     },
     shape::{Ngon, Rectangle},
     traits::UIElement,
@@ -55,29 +55,38 @@ pub(crate) fn node_test_view() -> impl UIElement {
 
 pub(crate) fn node_panel() -> impl UIElement {
     hstack(
-        (hstack(
-            vstack
-                (
+        (
+            hstack(
+                vstack
                     (
-                        header("header"),
-                        vstack(
-                            (
-                                lable_input("title1"),
-                                lable_input("title2"),
-                                lable_output("title3"),
-                                lable_output("title4"),
-                            )
-                        ),
+                        (
+                            header("header"),
+                            vstack(
+                                (
+                                    lable_input("title1"),
+                                    lable_input("title2"),
+                                    lable_output("title3"),
+                                    lable_output("title4"),
+                                )
+                            ),
+                        )
                     )
-                )
-                .horizontal_alignment(element::AlignItems::Center)
-                .background_color(GRAY_400).round(5.)
-                .title("panel")
-        ).vertical_alignment(element::AlignItems::Center).margin(Vec4::splat(10.)),
-        rectangle().color(GREEN).element_type(ElementType::Debug)
+                    .horizontal_alignment(element::AlignItems::Center)
+                    .background_color(GRAY_400).round(5.)
+                    .title("panel")
+                    .offset(Vec3::new(200.,-100.,0.))
+                    .hover(|ele, context|{
+                        if ele.get_input_state() == UIMouseState::Pressed{
+                            ele.offset.x += context.mouse_delta.x; 
+                            ele.offset.y -= context.mouse_delta.y;
+                        }
+                     })
+            ).vertical_alignment(element::AlignItems::Center).margin(Vec4::splat(10.)),
+            rectangle().color(GREEN).element_type(ElementType::Debug)
+        )
     )
-    )
-   .title("view")
+    .title("view")
+    
 }
 
 fn lable_input(content:&str) -> impl UIElement + Clone {

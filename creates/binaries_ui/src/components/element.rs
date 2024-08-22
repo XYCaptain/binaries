@@ -1,14 +1,16 @@
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, RwLockWriteGuard};
 
 use super::{UIMouseState, UIRenderMode};
+use crate::context::MemState;
 use crate::shape::ShapeTrait;
-use crate::{layout::Context, traits::UIElement};
+use crate::traits::UIElement;
 use bevy::color::palettes::css::{BLACK, BLUE_VIOLET};
 use bevy::color::palettes::tailwind::RED_900;
 use bevy::math::{Quat, Vec3, Vec4, VectorSpace};
-use bevy::{color::Srgba,math::Vec2};
+use bevy::{color::Srgba, math::Vec2};
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::shapes::RectPainter;
+use idgenerator::IdInstance;
 use taffy::prelude::auto;
 use taffy::Position;
 use taffy::{prelude::length, Dimension, Rect, Size, Style};
@@ -16,7 +18,7 @@ use taffy::{prelude::length, Dimension, Rect, Size, Style};
 #[derive(Clone, Debug)]
 pub enum ElementType {
     Content,
-    Debug
+    Debug,
 }
 
 #[derive(Clone, Debug)]
@@ -36,24 +38,12 @@ pub enum AlignItems {
     Center,
     Baseline,
     Stretch,
-    NotSet
+    NotSet,
 }
 
-// #[derive(Clone, Debug)]
-// pub enum AlignContent {
-//     Start,
-//     End,
-//     FlexStart,
-//     FlexEnd,
-//     Center,
-//     Stretch,
-//     SpaceBetween,
-//     SpaceEvenly,
-//     SpaceAround,
-// }
-
 pub(crate) type Drawfunc = Arc<dyn Fn(&mut Element) + Send + Sync + 'static>;
-pub(crate) type Callback = Arc<dyn Fn(&mut Context) + Send + Sync + 'static>;
+pub(crate) type Callback =
+    Arc<dyn Fn(&mut Element, &mut RwLockWriteGuard<MemState>) + Send + Sync + 'static>;
 pub(crate) type Renderback = Arc<dyn Fn(&mut ShapePainter) + Send + Sync + 'static>;
 pub(crate) type Shape = Arc<RwLock<dyn ShapeTrait>>;
 
@@ -61,17 +51,18 @@ pub(crate) type Shape = Arc<RwLock<dyn ShapeTrait>>;
 pub struct RenderAction {
     pub(crate) hover: Option<Renderback>,
     pub(crate) click: Option<Renderback>,
+    // pub(crate) click_down: Option<Renderback>,
+    // pub(crate) double_click: Option<Renderback>,
+    // pub(crate) drag:Option<Renderback>,
+    // pub(crate) update: Option<Renderback>,
 }
 
 impl Default for RenderAction {
     fn default() -> Self {
-        let fun = Arc::new(
-            |painter: &mut ShapePainter|{
-                let mut color = BLUE_VIOLET;
-                // color.alpha = 1.0;
-                painter.set_color(color);
-            }
-        );
+        let fun = Arc::new(|painter: &mut ShapePainter| {
+            let color = BLUE_VIOLET;
+            painter.set_color(color);
+        });
         Self {
             hover: Some(fun.clone()),
             click: Some(fun.clone()),
@@ -103,9 +94,9 @@ impl Default for IunputAction {
     }
 }
 
-
 #[derive(Clone)]
 pub struct Element {
+    id: i64,
     zorder: i32,
     pub(crate) tile: String,
     color: Srgba,
@@ -117,7 +108,7 @@ pub struct Element {
     render_state: UIMouseState,
     render_block: UIRenderMode,
     pub(crate) position: Vec3,
-    pub(crate) offset: Vec3,
+    pub offset: Vec3,
     isready: bool,
     margin: Vec4,
     padding: Vec4,
@@ -131,12 +122,13 @@ pub struct Element {
     pub(crate) cors_axis_alignment: AlignItems,
     pub(crate) self_main_axis_alignment: AlignItems,
     pub(crate) self_cors_axis_alignment: AlignItems,
-    element_type: ElementType
+    element_type: ElementType,
 }
 
 impl Element {
     pub fn new() -> Self {
         Self {
+            id: IdInstance::next_id(),
             tile: "element".to_string(),
             color: Srgba::ZERO,
             background_color: Srgba::ZERO,
@@ -162,7 +154,7 @@ impl Element {
             cors_axis_alignment: AlignItems::Start,
             self_main_axis_alignment: AlignItems::NotSet,
             self_cors_axis_alignment: AlignItems::NotSet,
-            element_type: ElementType::Content
+            element_type: ElementType::Content,
         }
     }
 
@@ -202,12 +194,18 @@ impl Element {
         self
     }
 
-    pub fn click(mut self, action: impl Fn(&mut Context) + Send + Sync + 'static) -> Self {
+    pub fn click(
+        mut self,
+        action: impl Fn(&mut Element, &mut RwLockWriteGuard<MemState>) + Send + Sync + 'static,
+    ) -> Self {
         self.action.click = Some(Arc::new(action));
         self
     }
 
-    pub fn hover(mut self, action: impl Fn(&mut Context) + Send + Sync + 'static) -> Self {
+    pub fn hover(
+        mut self,
+        action: impl Fn(&mut Element, &mut RwLockWriteGuard<MemState>) + Send + Sync + 'static,
+    ) -> Self {
         self.action.hover = Some(Arc::new(action));
         self
     }
@@ -253,7 +251,7 @@ impl Element {
         self.offset = offset;
         self
     }
-    
+
     pub fn shape(mut self, shape: impl ShapeTrait) -> Self {
         self.shape = Some(Arc::new(RwLock::new(shape)));
         self
@@ -269,104 +267,110 @@ impl Element {
         self
     }
 
-    pub fn set_position(mut self,pos:Vec3) -> Self{
+    pub fn set_position(mut self, pos: Vec3) -> Self {
         self.position = pos;
         self
     }
 
-    pub fn horizontal_alignment(mut self,align:AlignItems)->Self{
-        match self.direction{
+    pub fn horizontal_alignment(mut self, align: AlignItems) -> Self {
+        match self.direction {
             FlexDirection::Row => {
                 self.main_axis_alignment = align;
-            },
+            }
             FlexDirection::Column => {
                 self.cors_axis_alignment = align;
             }
             FlexDirection::RowReverse => {
                 self.main_axis_alignment = align;
-            },
+            }
             FlexDirection::ColumnReverse => {
                 self.cors_axis_alignment = align;
-            },
+            }
         }
         self
     }
 
-    pub fn vertical_alignment(mut self,align:AlignItems)->Self{
-        match self.direction{
+    pub fn vertical_alignment(mut self, align: AlignItems) -> Self {
+        match self.direction {
             FlexDirection::Row => {
                 self.cors_axis_alignment = align;
-            },
+            }
             FlexDirection::Column => {
                 self.main_axis_alignment = align;
             }
             FlexDirection::RowReverse => {
                 self.cors_axis_alignment = align;
-            },
+            }
             FlexDirection::ColumnReverse => {
                 self.main_axis_alignment = align;
-            },
+            }
         }
         self
     }
 
-    pub fn self_horizontal_alignment(mut self,align:AlignItems)->Self{
-        match self.direction{
+    pub fn self_horizontal_alignment(mut self, align: AlignItems) -> Self {
+        match self.direction {
             FlexDirection::Row => {
                 self.self_main_axis_alignment = align;
-            },
+            }
             FlexDirection::Column => {
                 self.self_cors_axis_alignment = align;
             }
             FlexDirection::RowReverse => {
                 self.self_main_axis_alignment = align;
-            },
+            }
             FlexDirection::ColumnReverse => {
                 self.cors_axis_alignment = align;
-            },
+            }
         }
         self
     }
 
-    pub fn self_vertical_alignment(mut self,align:AlignItems)->Self{
-        match self.direction{
+    pub fn self_vertical_alignment(mut self, align: AlignItems) -> Self {
+        match self.direction {
             FlexDirection::Row => {
                 self.self_cors_axis_alignment = align;
-            },
+            }
             FlexDirection::Column => {
                 self.self_main_axis_alignment = align;
             }
             FlexDirection::RowReverse => {
                 self.self_cors_axis_alignment = align;
-            },
+            }
             FlexDirection::ColumnReverse => {
                 self.self_main_axis_alignment = align;
-            },
+            }
         }
         self
     }
 
-    pub fn element_type(mut self, element_type: ElementType) -> Self{
+    pub fn element_type(mut self, element_type: ElementType) -> Self {
         self.element_type = element_type;
         self
+    }
+
+    pub fn id(&mut self) -> i64 {
+        return self.id;
     }
 }
 
 impl UIElement for Element {
     fn draw(&self, painter: &mut ShapePainter) {
         painter.set_color(self.color);
-        if self.render_block != UIRenderMode::WithoutSelf
-        {
+        if self.render_block != UIRenderMode::WithoutSelf {
             match self.render_state {
-                UIMouseState::Hover  => {
-                    if let Some(action) = self.render.hover.clone()
-                    {
+                UIMouseState::Hover => {
+                    if let Some(action) = self.render.hover.clone() {
+                        action(painter);
+                    }
+                }
+                UIMouseState::Pressed => {
+                    if let Some(action) = self.render.hover.clone() {
                         action(painter);
                     }
                 }
                 UIMouseState::Click => {
-                    if let Some(action) = self.render.hover.clone()
-                    {
+                    if let Some(action) = self.render.click.clone() {
                         action(painter);
                     }
                 }
@@ -381,14 +385,12 @@ impl UIElement for Element {
 
         painter.corner_radii = self.round;
 
-        // content rect
-        if self.color != Srgba::ZERO 
-        {
+        // TODO: content rect
+        if self.color != Srgba::ZERO {
             if let Some(shape) = self.shape.as_ref() {
-                painter.set_color(self.color * 0.5);
+                // painter.set_color(self.color * 0.5);
                 // painter.rect(shape.read().unwrap().get_size().unwrap());
-            }
-            else {
+            } else {
                 painter.set_color(self.color);
                 painter.rect(self.content_size);
             }
@@ -396,7 +398,6 @@ impl UIElement for Element {
 
         // layout rect
         if self.background_color != Srgba::ZERO {
-            painter.set_translation(self.position - self.offset);
             painter.set_color(self.background_color * 0.5);
             painter.rect(self.size);
         }
@@ -405,18 +406,16 @@ impl UIElement for Element {
         painter.set_rotation(Quat::IDENTITY);
     }
 
-    fn exc(&mut self, context: &mut Context) {
+    fn exc(&mut self, context: &mut RwLockWriteGuard<MemState>) {
         match self.action_state {
-            UIMouseState::Hover => {
-                match &self.action.hover {
-                    Some(action) => action(context),
-                    None => {},
+            UIMouseState::Hover | UIMouseState::Pressed => {
+                if let Some(action) = self.action.hover.clone() {
+                    action(self, context);
                 }
             }
             UIMouseState::Click => {
-                match &self.action.click {
-                    Some(action) => action(context),
-                    None => {}
+                if let Some(action) = self.action.click.clone() {
+                    action(self, context);
                 }
                 self.action_state = UIMouseState::Release;
             }
@@ -424,17 +423,18 @@ impl UIElement for Element {
             UIMouseState::DoubleClick => todo!(),
             UIMouseState::Drag => todo!(),
             UIMouseState::NoneBlock => {}
+            _ => {}
         }
     }
 
     fn style(&self) -> Style {
         let mut def = Style {
             size: match (self.size.x, self.size.y) {
-                (0.,0.) => Size::auto(),
+                (0., 0.) => Size::auto(),
                 _ => Size {
                     width: Dimension::Length(self.size.x),
                     height: Dimension::Length(self.size.y),
-                }
+                },
             },
             margin: Rect {
                 left: length(self.margin.x),
@@ -508,14 +508,19 @@ impl UIElement for Element {
         };
         match self.element_type {
             ElementType::Debug => {
-                def = Style{
+                def = Style {
                     position: Position::Absolute,
-                    inset: Rect { left: auto(), right: length(0.0), top: length(0.0), bottom: auto() },
+                    inset: Rect {
+                        left: auto(),
+                        right: length(0.0),
+                        top: length(0.0),
+                        bottom: auto(),
+                    },
                     justify_self: Some(taffy::JustifySelf::Center),
                     ..def
                 }
-            },
-            ElementType::Content => {},
+            }
+            ElementType::Content => {}
         }
         def
     }
@@ -546,38 +551,25 @@ impl UIElement for Element {
     }
 
     /// update position and insection state
-    fn update_state(&mut self,cursor: (f32, f32),origin: Vec3) {
-        let curo_screen = Vec2::new(
-            cursor.0 + origin.x,
-            cursor.1 - origin.y,
-        );
+    fn update_render_state(&mut self, cursor: (f32, f32), origin: Vec3) {
+        let curo_screen = Vec2::new(cursor.0 + origin.x, cursor.1 - origin.y);
 
         if cursor.0 < 0. {
             return;
         }
 
         if self.insection(curo_screen) {
-            self.action_state = UIMouseState::Hover;
             self.render_state = UIMouseState::Hover;
         } else {
-            self.action_state = UIMouseState::Release;
             self.render_state = UIMouseState::Release;
+            // self.action_state = UIMouseState::Release;
         }
     }
 
     fn set_action_state(&mut self, state: UIMouseState) {
-        match state {
-            UIMouseState::Click => {
-                if self.action_state == UIMouseState::Hover {
-                    self.action_state = UIMouseState::Click;
-                    self.render_state = UIMouseState::Click;
-                }
-            }
-            UIMouseState::Drag => {
-                if self.action_state == UIMouseState::Click {
-                    self.action_state = UIMouseState::Release;
-                    self.render_state = UIMouseState::Release;
-                }
+        match self.render_state {
+            UIMouseState::Hover => {
+                self.action_state = state;
             }
             _ => {}
         }
@@ -602,14 +594,16 @@ impl UIElement for Element {
 
     fn get_render_state(&mut self) -> Option<UIMouseState> {
         match (self.render_state, self.render.hover.is_some()) {
-            (UIMouseState::Hover ,true) | (UIMouseState::Click, true) => {
-                return  Some(self.render_state.clone());
-            },
+            (UIMouseState::Hover, true) | (UIMouseState::Click, true) => {
+                return Some(self.render_state.clone());
+            }
             // (UIMouse::Release, true) => todo!(),
             // (UIMouse::DoubleClick, true) => todo!(),
             // (UIMouse::Drag, true) => todo!(),
             // (UIMouse::NoneBlock, true) => todo!(),
-            _=> { return None; }
+            _ => {
+                return None;
+            }
         }
     }
 
@@ -620,11 +614,11 @@ impl UIElement for Element {
     fn block_render_state(&mut self) -> UIRenderMode {
         self.render_block
     }
-    
+
     fn get_element_type(&self) -> ElementType {
         self.element_type.clone()
     }
-    
+
     fn get_element(&self) -> Element {
         self.clone()
     }

@@ -13,6 +13,8 @@ pub enum UIMouseState {
     Release,
     DoubleClick,
     Drag,
+    Selected,
+    Pressed,
     NoneBlock
 }
 
@@ -59,7 +61,6 @@ pub fn ngon(sides:f32) -> Element
 mod tests {
     use bevy::log::trace;
     use element_set::ElementSet;
-    use crate::layout::Context;
 
     use super::*;
 
@@ -76,14 +77,14 @@ mod tests {
 
     #[test]
     fn test_element() {
-        Element::new().click(|_:&mut Context|{});
+        Element::new().click(|_,_|{});
     }
 
     #[test]
     fn test_element_tuple() {
         (
-            Element::new().click(|_:&mut Context|{}),
-            Element::new().click(|_:&mut Context|{})
+            Element::new().click(|_,_|{}),
+            Element::new().click(|_,_|{})
         ).foreach_view(&mut |child| {
             trace!("{:?}", child.style());
         });

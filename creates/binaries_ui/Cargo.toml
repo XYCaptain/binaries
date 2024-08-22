@@ -10,4 +10,9 @@ taffy = "0.5.2"
 rusttype = "0.9.3"
 lyon = "1.0.1"
 svg = "0.17.0"
+idgenerator = "2.0.0"
 binaries_macros = { path="./macros"}
+tokio = { version = "1", features = ["io-util","full"] }
+futures-util = "0.3.0"
+tonbo = { git = "https://github.com/tonbo-io/tonbo"}
+tonbo_macro = { git = "https://github.com/tonbo-io/tonbo" }

@@ -1,13 +1,8 @@
-use bevy::asset::Assets;
-use bevy::ecs::system::SystemParam;
 use bevy::math::Vec3;
-use bevy::prelude::{Commands, Query, ResMut, Resource, With};
+use bevy::prelude::Resource;
 use bevy::render::mesh::Mesh;
 use bevy::render::render_asset::RenderAssetUsages;
-use bevy::sprite::ColorMaterial;
 use bevy::transform::components::Transform;
-use bevy::window::{PrimaryWindow, Window};
-use bevy_vector_shapes::prelude::ShapePainter;
 use lyon::path::math::point;
 use lyon::path::path::BuilderImpl;
 use lyon::path::{builder, Path};
@@ -17,6 +12,7 @@ use rusttype::{Font, IntoGlyphId, OutlineBuilder, Rect, Scale, ScaledGlyph};
 pub mod text_shape;
 pub use text_shape::TextShape;
 
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct Vertexs {
@@ -25,13 +21,7 @@ pub struct Vertexs {
     pub prim_id: u32,
 }
 
-#[derive(SystemParam)]
-pub struct Config<'w,'s> {
-   pub default_font: ResMut<'w,DefaultFont>,
-   pub meshes: ResMut<'w,Assets<Mesh>>,
-   pub materials: ResMut<'w,Assets<ColorMaterial>>,
-   pub window: Query<'w,'s,&'static Window, With<PrimaryWindow>>,
-}
+
 
 #[derive(Resource)]
 pub struct DefaultFont(rusttype::Font<'static>);

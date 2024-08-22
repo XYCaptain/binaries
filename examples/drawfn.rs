@@ -1,15 +1,12 @@
 mod views;
-use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use bevy::color::palettes::css::DIM_GRAY;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::winit::WinitSettings;
-use binaries_ui::components::element;
 use binaries_ui::components::stacks::hstack;
 use binaries_ui::layout::UILayouts;
-use binaries_ui::shape::Rectangle;
 use binaries_ui::traits::UIElement;
 use binaries_ui::UIPlugin;
 

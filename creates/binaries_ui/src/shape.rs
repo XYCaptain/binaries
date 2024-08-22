@@ -1,9 +1,9 @@
 use std::f32::consts::PI;
 
-use bevy::{asset::Assets, color::{palettes::tailwind::PINK_800, Color, Srgba}, math::{Vec2, Vec3, Vec4, VectorSpace}, pbr::PbrBundle, prelude::{Commands, Mesh, ResMut, Transform}, sprite::{MaterialMesh2dBundle, Mesh2dHandle}};
+use bevy::{color::Color, math::{Vec2, Vec3, Vec4}, prelude::{Commands, Transform}, sprite::{MaterialMesh2dBundle, Mesh2dHandle}};
 use bevy_vector_shapes::{prelude::ShapePainter, shapes::{DiscPainter, LinePainter, RectPainter, RegularPolygonPainter, TrianglePainter}};
 
-use crate::text::Config;
+use crate::Config;
 
 pub trait ShapeTrait: Send + Sync + 'static {
     fn draw(&self, painter: &mut ShapePainter);

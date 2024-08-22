@@ -1,16 +1,18 @@
 use std::clone;
+use std::sync::RwLockWriteGuard;
 
+use crate::context::MemState;
 use crate::layout::UILayouts;
-use crate::shape::{Rectangle, ShapeTrait};
+use crate::shape::ShapeTrait;
 use bevy::color::Srgba;
-use bevy::math::{Vec2, Vec3, Vec4, VectorSpace};
+use bevy::math::{Vec2, Vec3, Vec4};
 
 use super::element::{ AlignItems, Element};
 use super::element_set::ElementSet;
 use super::{UIMouseState, UIRenderMode};
-use crate::{layout::Context, traits::UIElement};
+use crate::traits::UIElement;
 use bevy_vector_shapes::prelude::ShapePainter;
-use taffy::{Size, Style};
+use taffy::Style;
 use crate::components::element::FlexDirection;
 
 pub fn vstack<K>(children: K) -> Stack<K>
@@ -77,12 +79,12 @@ where
         self
     }
 
-    pub fn click(mut self, action: impl Fn(&mut Context) + Send + Sync + 'static) -> Self {
+    pub fn click(mut self, action: impl Fn(&mut Element,&mut RwLockWriteGuard<MemState>) + Send + Sync + 'static) -> Self {
         self.element =  self.element.click(action);
         self
     }
 
-    pub fn hover(mut self, action: impl Fn(&mut Context) + Send + Sync + 'static) -> Self {
+    pub fn hover(mut self, action: impl Fn(&mut Element,&mut RwLockWriteGuard<MemState>) + Send + Sync + 'static) -> Self {
         self.element =  self.element.hover(action);
         self
     }
@@ -214,11 +216,11 @@ where
         self.element.update_layout(layout, origin, inherit_origin);
     }
 
-    fn update_state(&mut self, cursor: (f32, f32), origin:Vec3) {
-        self.element.update_state(cursor, origin);
+    fn update_render_state(&mut self, cursor: (f32, f32), origin:Vec3) {
+        self.element.update_render_state(cursor, origin);
     }
 
-    fn exc(&mut self, context: &mut Context) {
+    fn exc(&mut self, context: &mut RwLockWriteGuard<MemState>) {
         self.element.exc(context);
     }
 

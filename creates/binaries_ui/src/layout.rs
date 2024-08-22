@@ -1,23 +1,14 @@
-use std::{collections::HashMap, sync::{Arc, RwLock}};
+use std::{collections::HashMap, sync::RwLockWriteGuard};
 
-use bevy::{asset::Assets, color::palettes::{css::{BLACK, GREEN}, tailwind::{GREEN_200, RED_400}}, math::{Vec2, Vec3, Vec4, VectorSpace}, prelude::{Commands, Mesh, ResMut, Resource}, reflect::Reflect};
+use bevy::{color::palettes::{css::{BLACK, GREEN}, tailwind::{GREEN_200, RED_400}}, math::{Vec2, Vec3, Vec4}, prelude::{Commands, Resource}};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{
     prelude::TaffyMaxContent, Dimension, JustifyContent, NodeId, Size, Style, TaffyTree, TraversePartialTree
 };
 
-use crate::{components::{element::{self, AlignItems, Element, FlexDirection}, rectangle, stacks::hstack, text, UIMouseState}, shape::{Curve, ShapeTrait, Text}, text::Config};
+use crate::{components::{element::{AlignItems, Element, FlexDirection}, rectangle, text, UIMouseState}, context::MemState, shape::{Curve, ShapeTrait}, Config};
 
 use super::traits::UIElement;
-
-#[derive(Clone,Resource)]
-pub struct Context(Arc<RwLock<UILayouts>>);
-
-impl Default for Context {
-    fn default() -> Self {
-        Self(Arc::new(RwLock::new(UILayouts::new())))
-    }
-}
 
 #[derive(Resource)]
 pub struct UILayouts {
@@ -156,7 +147,7 @@ impl UILayouts {
         self.draw_tree(painter);
     }
 
-    pub fn exc_action(&mut self, context: &mut Context) {
+    pub fn exc_action(&mut self, context: &mut RwLockWriteGuard<MemState>) {
         for element in self.elements.values_mut() {
             element.exc( context);
         }
@@ -197,7 +188,8 @@ impl UILayouts {
             {
                 //Update state
                 element.update_layout(layout, painter.origin.unwrap().clone(), origin);
-                element.update_state(cursor, painter.origin.unwrap().clone());
+                element.update_render_state(cursor, painter.origin.unwrap().clone());
+                
                 if inherit_render_state.is_some()
                 {
                     // inherit render state
@@ -217,7 +209,7 @@ impl UILayouts {
                     }
                 }
             }
-            let origin_new = Vec3::new(layout.location.x,layout.location.y,0.) + origin;
+            let origin_new = Vec3::new(layout.location.x +  element.offset.x ,layout.location.y -  element.offset.y,0.) + origin;
             self.traverse_update(*child, painter, origin_new, cursor, blockstate);
         }
     }
