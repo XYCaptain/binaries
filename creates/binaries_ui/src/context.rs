@@ -16,7 +16,7 @@ pub struct MemState{
     pub user_input: UIMouseState,
     pub selection_group: Vec::<i64>,
     pub selection_current: i64,
-    pub drag_delta: (Vec2,Vec2),
+    pub drag_delta: (Vec2,Vec2,Vec2),
     pub mouse_position:Vec2,
     pub mouse_delta: Vec2,
 }
@@ -32,7 +32,7 @@ impl Default for Context {
             user_input: UIMouseState::Release,
             selection_group: Vec::new(),
             selection_current: -1,
-            drag_delta: (Vec2::ZERO,Vec2::ZERO),
+            drag_delta: (Vec2::ZERO,Vec2::ZERO,Vec2::ZERO),
             mouse_position: Vec2::ONE * -100.,
             mouse_delta: Vec2::ZERO,
         })))

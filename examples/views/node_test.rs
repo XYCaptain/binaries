@@ -57,8 +57,7 @@ pub(crate) fn node_panel() -> impl UIElement {
     hstack(
         (
             hstack(
-                vstack
-                    (
+                vstack(
                         (
                             header("header"),
                             vstack(
@@ -74,19 +73,12 @@ pub(crate) fn node_panel() -> impl UIElement {
                     .horizontal_alignment(element::AlignItems::Center)
                     .background_color(GRAY_400).round(5.)
                     .title("panel")
-                    .offset(Vec3::new(200.,-100.,0.))
-                    .hover(|ele, context|{
-                        if ele.get_input_state() == UIMouseState::Pressed{
-                            ele.offset.x += context.mouse_delta.x; 
-                            ele.offset.y -= context.mouse_delta.y;
-                        }
-                     })
+                    .offset(Vec3::new(200.,-100.,0.)).drag_enable(true)
             ).vertical_alignment(element::AlignItems::Center).margin(Vec4::splat(10.)),
             rectangle().color(GREEN).element_type(ElementType::Debug)
         )
     )
     .title("view")
-    
 }
 
 fn lable_input(content:&str) -> impl UIElement + Clone {

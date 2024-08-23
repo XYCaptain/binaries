@@ -1,19 +1,22 @@
 use std::f32::consts::PI;
 
 use bevy::{color::Color, math::{Vec2, Vec3, Vec4}, prelude::{Commands, Transform}, sprite::{MaterialMesh2dBundle, Mesh2dHandle}};
-use bevy_vector_shapes::{prelude::ShapePainter, shapes::{DiscPainter, LinePainter, RectPainter, RegularPolygonPainter, TrianglePainter}};
+use bevy_vector_shapes::{prelude::ShapePainter, shapes::{DiscPainter, LinePainter, RectPainter, RegularPolygonPainter}};
 
 use crate::Config;
 
 pub trait ShapeTrait: Send + Sync + 'static {
     fn draw(&self, painter: &mut ShapePainter);
-    // fn draw_backgroud(&self, painter: &mut ShapePainter);
     fn set_size(&mut self, size: Vec2);
     fn get_size(&self) -> Option<Vec2> {
         None
     }
     fn set_round(&mut self,round:Vec4);
     fn update(&mut self,config: &mut Config, commands: &mut Commands, offset: Vec3);
+    fn hits(&self,cursor: Vec2)->bool {
+        let _ = cursor;
+        false
+    }
 }
 
 #[derive(Clone,Debug)]
@@ -142,6 +145,10 @@ impl ShapeTrait for Circle {
         let _ = offset;
         let _ = commands;
         let _ = config;
+    }
+
+    fn hits(&self,cursor:Vec2)-> bool {
+        cursor.length() < self.radius
     }
 }
 

@@ -1,7 +1,7 @@
 mod views;
 use std::time::Duration;
 
-use bevy::color::palettes::css::DIM_GRAY;
+use bevy::color::palettes::css::{DIM_GRAY, GREEN};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::winit::WinitSettings;

@@ -49,7 +49,7 @@ pub fn rectangle() -> Element
 
 pub fn circle(radius:f32) -> Element
 {
-    Element::new().color(Srgba::WHITE).shape(Circle{ radius, ..Default::default() }).title("circle")
+    Element::new().color(Srgba::WHITE).shape(Circle{ radius, ..Default::default()}).title("circle")
 }
 
 pub fn ngon(sides:f32) -> Element

@@ -1,6 +1,6 @@
 use std::sync::RwLockWriteGuard;
 
-use bevy::math::Vec3;
+use bevy::math::{Vec2, Vec3};
 use bevy_vector_shapes::prelude::ShapePainter;
 use taffy::{Dimension, Layout, Size, Style};
 
@@ -26,7 +26,7 @@ pub trait UIElement: Sync + Send + 'static {
 
     fn set_ready(&mut self);
 
-    fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3);
+    fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3, cxt:&mut RwLockWriteGuard<MemState>);
 
     fn update_render_state(&mut self, cursor: (f32, f32), origin:Vec3);
 

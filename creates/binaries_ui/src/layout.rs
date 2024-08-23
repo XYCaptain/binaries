@@ -92,13 +92,13 @@ impl UILayouts {
         for element in self.elements.values_mut() {
             if let Some(shape) = element.shape.as_ref() {
                 let mut shape = shape.write().unwrap();
-                shape.update(&mut config,&mut commands,element.position);
+                shape.update(&mut config,&mut commands,element.layout_position);
                 
             }
         }
     }
     
-    pub fn update(&mut self, cursor: (f32, f32), painter: &mut ShapePainter) {
+    pub fn update(&mut self,context: &mut RwLockWriteGuard<MemState>, screen_layout_origin:Vec3) {
         //setup dom tree
         if u64::from(self.debug_root) > 0u64 && self.taffy.child_count(self.debug_root) == 0{
             self.gen_debug_elements_tree();
@@ -109,8 +109,8 @@ impl UILayouts {
             let old_style = self.taffy.style(self.root).expect("");
             self.taffy.set_style(self.root, Style{
                 size:Size {
-                    width: Dimension::Length(painter.origin.unwrap().x * -2.),
-                    height: Dimension::Length(painter.origin.unwrap().y * 2.),
+                    width: Dimension::Length(screen_layout_origin.x * -2.),
+                    height: Dimension::Length(screen_layout_origin.y * 2.),
                 },
                 ..old_style.clone()
             }).expect("msg");
@@ -123,8 +123,8 @@ impl UILayouts {
             let old_style = self.taffy.style(content_node).expect("");
             self.taffy.set_style(content_node, Style{
                 size:Size {
-                    width: Dimension::Length(painter.origin.unwrap().x * -2.),
-                    height: Dimension::Length(painter.origin.unwrap().y * 2.),
+                    width: Dimension::Length(screen_layout_origin.x * -2.),
+                    height: Dimension::Length(screen_layout_origin.y * 2.),
                 },
                 ..old_style.clone()
             }).expect("msg");
@@ -132,7 +132,7 @@ impl UILayouts {
         }
         
         self.taffy.compute_layout(self.root, taffy::Size::MAX_CONTENT).expect("");
-        self.traverse_update(self.root,painter,Vec3::new(0.,0.,0.), cursor,None);
+        self.traverse_update(self.root,screen_layout_origin,Vec3::new(0.,0.,0.), context,None);
 
         for (element,debug_element) in self.debuge_relations.iter() {
             let render_state = self.elements.get_mut(element).unwrap().get_render_state();
@@ -157,11 +157,11 @@ impl UILayouts {
         painter.set_translation(Vec3::ZERO);
         painter.set_color(BLACK);
         for (element_id,debuge_element_id) in self.debuge_relations.iter(){
-            let pareant_p = self.elements.get(debuge_element_id).unwrap().position;
+            let pareant_p = self.elements.get(debuge_element_id).unwrap().layout_position;
             for child_element_id in  self.taffy.child_ids(*element_id){
                 let child_debug_element_id = self.debuge_relations.get(&child_element_id);
                 if child_debug_element_id.is_some(){
-                    let child_p = self.elements.get(child_debug_element_id.unwrap()).unwrap().position;
+                    let child_p = self.elements.get(child_debug_element_id.unwrap()).unwrap().layout_position;
                     Curve::new(pareant_p + Vec3::NEG_Z,child_p + Vec3::NEG_Z).draw(painter);
                 }
             }
@@ -178,7 +178,7 @@ impl UILayouts {
     }
     
     //TODO: needed to optimize
-    fn traverse_update(&mut self, node: NodeId,painter: &mut ShapePainter, origin:Vec3, cursor: (f32, f32), inherit_render_state: Option<UIMouseState>) {
+    fn traverse_update(&mut self, node: NodeId,screen_layout_origin:Vec3, inhert_origin:Vec3, cxt:&mut RwLockWriteGuard<MemState>, inherit_render_state: Option<UIMouseState>) {
         let children:Vec<NodeId> =  self.taffy.child_ids(node).collect();
         for child in children.iter() {
             let layout = self.taffy.layout(*child).expect("布局错误");
@@ -187,8 +187,8 @@ impl UILayouts {
 
             {
                 //Update state
-                element.update_layout(layout, painter.origin.unwrap().clone(), origin);
-                element.update_render_state(cursor, painter.origin.unwrap().clone());
+                element.update_layout(layout, screen_layout_origin.clone(), inhert_origin,cxt);
+                element.update_render_state((cxt.mouse_position.x,cxt.mouse_position.y), screen_layout_origin.clone());
                 
                 if inherit_render_state.is_some()
                 {
@@ -209,8 +209,8 @@ impl UILayouts {
                     }
                 }
             }
-            let origin_new = Vec3::new(layout.location.x +  element.offset.x ,layout.location.y -  element.offset.y,0.) + origin;
-            self.traverse_update(*child, painter, origin_new, cursor, blockstate);
+            let origin_new = Vec3::new(layout.location.x +  element.position_offset.x  + element.rubber_offset.x,layout.location.y -  element.position_offset.y - element.rubber_offset.y,0.) + inhert_origin;
+            self.traverse_update(*child, screen_layout_origin, origin_new, cxt, blockstate);
         }
     }
     

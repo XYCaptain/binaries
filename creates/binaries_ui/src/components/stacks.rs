@@ -185,6 +185,11 @@ where
         }
         self
     }
+
+    pub fn drag_enable(mut self, enable: bool)->Self{
+        self.element = self.element.drag_enable(enable);
+        self
+    }
 }
 
 impl<K> UIElement for Stack<K>
@@ -212,8 +217,8 @@ where
         self.element.set_ready();
     }
 
-    fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3) {
-        self.element.update_layout(layout, origin, inherit_origin);
+    fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3, cxt: &mut RwLockWriteGuard<MemState>) {
+        self.element.update_layout(layout, origin, inherit_origin, cxt);
     }
 
     fn update_render_state(&mut self, cursor: (f32, f32), origin:Vec3) {
@@ -272,6 +277,7 @@ where
     fn get_element(&self) -> Element {
         self.element.clone()
     }
+
 }
 
 

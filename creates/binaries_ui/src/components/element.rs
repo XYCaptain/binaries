@@ -5,8 +5,7 @@ use crate::context::MemState;
 use crate::shape::ShapeTrait;
 use crate::traits::UIElement;
 use bevy::color::palettes::css::{BLACK, BLUE_VIOLET};
-use bevy::color::palettes::tailwind::RED_900;
-use bevy::math::{Quat, Vec3, Vec4, VectorSpace};
+use bevy::math::{Quat, Vec3, Vec3Swizzles, Vec4, VectorSpace};
 use bevy::{color::Srgba, math::Vec2};
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::shapes::RectPainter;
@@ -102,13 +101,14 @@ pub struct Element {
     color: Srgba,
     background_color: Srgba,
     round: Vec4,
-    size: Vec2,
+    layout_size: Vec2,
     pub(crate) content_size: Vec2,
     action_state: UIMouseState,
     render_state: UIMouseState,
     render_block: UIRenderMode,
-    pub(crate) position: Vec3,
-    pub offset: Vec3,
+    pub(crate) layout_position: Vec3,
+    pub position_offset: Vec3,
+    pub rubber_offset: Vec3,
     isready: bool,
     margin: Vec4,
     padding: Vec4,
@@ -123,6 +123,7 @@ pub struct Element {
     pub(crate) self_main_axis_alignment: AlignItems,
     pub(crate) self_cors_axis_alignment: AlignItems,
     element_type: ElementType,
+    drag_enable: bool
 }
 
 impl Element {
@@ -133,10 +134,11 @@ impl Element {
             color: Srgba::ZERO,
             background_color: Srgba::ZERO,
             round: Vec4::ZERO,
-            size: Vec2::ZERO,
+            layout_size: Vec2::ZERO,
             content_size: Vec2::ZERO,
-            position: Vec3::ZERO,
-            offset: Vec3::ZERO,
+            layout_position: Vec3::ZERO,
+            position_offset: Vec3::ZERO,
+            rubber_offset: Vec3::ZERO,
             action_state: UIMouseState::Release,
             isready: false,
             action: IunputAction::default(),
@@ -155,19 +157,30 @@ impl Element {
             self_main_axis_alignment: AlignItems::NotSet,
             self_cors_axis_alignment: AlignItems::NotSet,
             element_type: ElementType::Content,
+            drag_enable: false,
         }
     }
 
     pub fn insection(&self, point: Vec2) -> bool {
-        if point.x > self.position.x - self.size.x / 2.
-            && point.x < self.position.x + self.size.x / 2.
+        let left = self.layout_position.x - self.layout_size.x / 2.;
+        let right = self.layout_position.x + self.layout_size.x / 2.;
+        let top = -self.layout_position.y + self.layout_size.y / 2.;
+        let down = -self.layout_position.y - self.layout_size.y / 2.;
+
+        if point.x > left
+            && point.x < right
         {
-            if point.y > -self.position.y - self.size.y / 2.
-                && point.y < -self.position.y + self.size.y / 2.
+            if point.y > down
+                && point.y < top
             {
                 return true;
             }
         }
+
+        if let Some(shape) = self.shape.clone() {
+            return shape.write().unwrap().hits(Vec2::new(point.x - self.layout_position.x, point.y + self.layout_position.y));
+        }
+
         return false;
     }
 
@@ -187,7 +200,7 @@ impl Element {
     }
 
     pub fn size(mut self, size: Vec2) -> Self {
-        self.size = size;
+        self.layout_size = size;
         if let Some(shape) = self.shape.as_ref() {
             shape.write().unwrap().set_size(size);
         }
@@ -229,7 +242,7 @@ impl Element {
     }
 
     pub fn get_size(&self) -> Vec2 {
-        self.size
+        self.layout_size
     }
 
     pub fn order(mut self, zorder: i32) -> Self {
@@ -248,7 +261,7 @@ impl Element {
     }
 
     pub fn offset(mut self, offset: Vec3) -> Self {
-        self.offset = offset;
+        self.position_offset = offset;
         self
     }
 
@@ -268,7 +281,7 @@ impl Element {
     }
 
     pub fn set_position(mut self, pos: Vec3) -> Self {
-        self.position = pos;
+        self.layout_position = pos;
         self
     }
 
@@ -352,6 +365,21 @@ impl Element {
     pub fn id(&mut self) -> i64 {
         return self.id;
     }
+
+    fn drag(&mut self, delta:Vec2){
+        match self.action_state {
+            UIMouseState::Pressed => {
+                self.rubber_offset.x = delta.x; 
+                self.rubber_offset.y = -delta.y;
+            },
+            _ => {}
+        }
+    }
+
+    pub fn drag_enable(mut self, enable: bool)->Self{
+        self.drag_enable = enable;
+        self
+    }
 }
 
 impl UIElement for Element {
@@ -378,7 +406,7 @@ impl UIElement for Element {
             }
         }
 
-        painter.set_translation(self.position);
+        painter.set_translation(self.layout_position);
         if let Some(shape) = self.shape.as_ref() {
             shape.read().unwrap().draw(painter);
         }
@@ -399,7 +427,7 @@ impl UIElement for Element {
         // layout rect
         if self.background_color != Srgba::ZERO {
             painter.set_color(self.background_color * 0.5);
-            painter.rect(self.size);
+            painter.rect(self.layout_size);
         }
 
         painter.corner_radii = Vec4::ZERO;
@@ -408,7 +436,7 @@ impl UIElement for Element {
 
     fn exc(&mut self, context: &mut RwLockWriteGuard<MemState>) {
         match self.action_state {
-            UIMouseState::Hover | UIMouseState::Pressed => {
+            UIMouseState::Hover | UIMouseState::Pressed | UIMouseState::Release => {
                 if let Some(action) = self.action.hover.clone() {
                     action(self, context);
                 }
@@ -419,7 +447,7 @@ impl UIElement for Element {
                 }
                 self.action_state = UIMouseState::Release;
             }
-            UIMouseState::Release => {}
+            // UIMouseState::Release => {}
             UIMouseState::DoubleClick => todo!(),
             UIMouseState::Drag => todo!(),
             UIMouseState::NoneBlock => {}
@@ -429,11 +457,11 @@ impl UIElement for Element {
 
     fn style(&self) -> Style {
         let mut def = Style {
-            size: match (self.size.x, self.size.y) {
+            size: match (self.layout_size.x, self.layout_size.y) {
                 (0., 0.) => Size::auto(),
                 _ => Size {
-                    width: Dimension::Length(self.size.x),
-                    height: Dimension::Length(self.size.y),
+                    width: Dimension::Length(self.layout_size.x),
+                    height: Dimension::Length(self.layout_size.y),
                 },
             },
             margin: Rect {
@@ -526,7 +554,7 @@ impl UIElement for Element {
     }
 
     fn size(&self) -> (f32, f32) {
-        (self.size.x, self.size.y)
+        (self.layout_size.x, self.layout_size.y)
     }
 
     fn is_ready(&self) -> bool {
@@ -537,17 +565,27 @@ impl UIElement for Element {
         self.isready = true;
     }
 
-    fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3) {
-        self.size.x = layout.size.width;
-        self.size.y = layout.size.height;
+    fn update_layout(&mut self, layout: &taffy::Layout, origin: Vec3, inherit_origin: Vec3, cxt:&mut RwLockWriteGuard<MemState>) {
+        self.layout_size.x = layout.size.width;
+        self.layout_size.y = layout.size.height;
         self.content_size.x = layout.content_size.width;
         self.content_size.y = layout.content_size.height;
 
-        self.position = bevy::prelude::Vec3::new(
-            origin.x + layout.location.x + self.size.x / 2. + inherit_origin.x,
-            origin.y - self.size.y / 2. - layout.location.y - inherit_origin.y,
+        if self.drag_enable{
+            if self.action_state == UIMouseState::Pressed  {
+                self.drag(cxt.drag_delta.1 - cxt.drag_delta.0);
+            }
+            else if self.action_state == UIMouseState::Release {
+                self.position_offset += self.rubber_offset;
+                self.rubber_offset = Vec3::ZERO;
+            }
+        }
+
+        self.layout_position = bevy::prelude::Vec3::new(
+            origin.x + layout.location.x + self.layout_size.x / 2. + inherit_origin.x,
+            origin.y - self.layout_size.y / 2. - layout.location.y - inherit_origin.y,
             0.,
-        ) + self.offset;
+        ) + self.position_offset + self.rubber_offset;
     }
 
     /// update position and insection state
@@ -562,7 +600,6 @@ impl UIElement for Element {
             self.render_state = UIMouseState::Hover;
         } else {
             self.render_state = UIMouseState::Release;
-            // self.action_state = UIMouseState::Release;
         }
     }
 

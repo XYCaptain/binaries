@@ -1,4 +1,4 @@
-use bevy::{ input::{keyboard::{KeyboardInput}, mouse::{MouseButtonInput, MouseMotion}, ButtonState}, log::info, math::{Vec2, Vec3}, prelude::{Commands, EventReader, KeyCode, MouseButton, Query, Res, ResMut, With}, time::Time, window::{CursorMoved, PrimaryWindow, Window}};
+use bevy::{ input::{keyboard::KeyboardInput, mouse::{MouseButtonInput, MouseMotion}, ButtonState}, log::info, math::{Vec2, Vec3}, prelude::{Commands, EventReader, KeyCode, MouseButton, Query, Res, ResMut, With}, time::Time, window::{CursorMoved, PrimaryWindow, Window}};
 use bevy_vector_shapes::prelude::ShapePainter;
 
 use crate::{components::UIMouseState, layout::UILayouts, Config};
@@ -18,14 +18,15 @@ pub fn logic_loop_system(
     commands: Commands,
 ) {
     let window = config.window.get_single().unwrap();
+    let binding = config.context.storage();
+    let mut cxt = binding.write().unwrap();
+
     painter.origin = Some(Vec3::new(-window.width() * 0.5, window.height() * 0.5, 0.));
     painter.set_2d();
     if painter.origin.is_none() {
         return;
     }
 
-    let binding = config.context.storage();
-    let mut cxt = binding.write().unwrap();
     cxt.mouse_delta = Vec2::ZERO;
     for event in cursor_moved_events.read() {
         cxt.mouse_position = event.position;
@@ -39,9 +40,6 @@ pub fn logic_loop_system(
         }
     }
 
-    layouts.update((cxt.mouse_position.x, cxt.mouse_position.y), &mut painter);
-    layouts.update_shape(config, commands);
-
     for event in mouse_button_input_events.read() {
         match event {
             MouseButtonInput {
@@ -50,7 +48,9 @@ pub fn logic_loop_system(
                 ..
             } => {
                 layouts.update_input_state(UIMouseState::Pressed);
-                cxt.drag_delta.0 = cxt.mouse_position.clone()
+                cxt.drag_delta.0 = cxt.mouse_position.clone();
+                cxt.drag_delta.1 = cxt.mouse_position.clone();
+                cxt.mouse_state = ButtonState::Pressed;
             }
             MouseButtonInput {
                 button: MouseButton::Left,
@@ -58,7 +58,10 @@ pub fn logic_loop_system(
                 ..
             } => {
                 layouts.update_input_state(UIMouseState::Release);
-                cxt.drag_delta.1 = cxt.mouse_position.clone();
+                cxt.drag_delta.2 = cxt.drag_delta.1 - cxt.drag_delta.0;
+                cxt.drag_delta.0 = cxt.mouse_position.clone();
+                cxt.drag_delta.1 = cxt.mouse_position.clone(); 
+                cxt.mouse_state = ButtonState::Released;
             }
             _ => {}
          }
@@ -86,8 +89,20 @@ pub fn logic_loop_system(
     }
 
     for event in mouse_motion_events.read() {
-        info!("{:?} {:?}", event,cxt.mouse_state);
+        info!("{:?} {:?}", event,cxt.mouse_position);
+        match cxt.mouse_state {
+            ButtonState::Pressed => {
+                cxt.drag_delta.1 = cxt.mouse_position;
+            },
+            ButtonState::Released => {
+                // cxt.drag_delta.0 = Vec2::ZERO;
+                // cxt.drag_delta.1 = Vec2::ZERO;
+            },
+        }
     }
+
+    layouts.update(&mut cxt, painter.origin.unwrap());
+    layouts.update_shape(config, commands);
 
     // for event in mouse_wheel_events.read() {
     //     // info!("{:?}", event);
@@ -107,6 +122,7 @@ pub fn logic_loop_system(
     // for event in double_tap_gesture_events.read() {
     //     // layouts.update_input_state(UIMouse::Click);
     // }
+
     layouts.draw(&mut painter);
     layouts.exc_action(&mut cxt);
 }
