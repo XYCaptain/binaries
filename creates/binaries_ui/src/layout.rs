@@ -92,7 +92,7 @@ impl UILayouts {
         for element in self.elements.values_mut() {
             if let Some(shape) = element.shape.as_ref() {
                 let mut shape = shape.write().unwrap();
-                shape.update(&mut config,&mut commands,element.layout_position);
+                shape.update(&mut config,&mut commands,element.layout_anchor);
                 
             }
         }
@@ -149,7 +149,7 @@ impl UILayouts {
 
     pub fn exc_action(&mut self, context: &mut RwLockWriteGuard<MemState>) {
         for element in self.elements.values_mut() {
-            element.exc( context);
+            element.execute( context);
         }
     }
 
@@ -157,11 +157,11 @@ impl UILayouts {
         painter.set_translation(Vec3::ZERO);
         painter.set_color(BLACK);
         for (element_id,debuge_element_id) in self.debuge_relations.iter(){
-            let pareant_p = self.elements.get(debuge_element_id).unwrap().layout_position;
+            let pareant_p = self.elements.get(debuge_element_id).unwrap().layout_anchor;
             for child_element_id in  self.taffy.child_ids(*element_id){
                 let child_debug_element_id = self.debuge_relations.get(&child_element_id);
                 if child_debug_element_id.is_some(){
-                    let child_p = self.elements.get(child_debug_element_id.unwrap()).unwrap().layout_position;
+                    let child_p = self.elements.get(child_debug_element_id.unwrap()).unwrap().layout_anchor;
                     Curve::new(pareant_p + Vec3::NEG_Z,child_p + Vec3::NEG_Z).draw(painter);
                 }
             }
@@ -209,7 +209,7 @@ impl UILayouts {
                     }
                 }
             }
-            let origin_new = Vec3::new(layout.location.x +  element.position_offset.x  + element.rubber_offset.x,layout.location.y -  element.position_offset.y - element.rubber_offset.y,0.) + inhert_origin;
+            let origin_new = Vec3::new(layout.location.x +  element.anchor_offset.x  + element.rubber_offset.x,layout.location.y -  element.anchor_offset.y - element.rubber_offset.y,0.) + inhert_origin;
             self.traverse_update(*child, screen_layout_origin, origin_new, cxt, blockstate);
         }
     }

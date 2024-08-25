@@ -1,4 +1,3 @@
-use std::clone;
 use std::sync::RwLockWriteGuard;
 
 use crate::context::MemState;
@@ -135,8 +134,8 @@ where
             let mut new_children = Vec::new();
             let mut new_pairs = Vec::new();
             for  (p_id,child) in children {
-                if child.get_children().is_some() {
-                    for grand_child in child.get_children().unwrap() {
+                if child.children().is_some() {
+                    for grand_child in child.children().unwrap() {
                         new_children.push(grand_child);
                     }
                 }
@@ -150,7 +149,7 @@ where
     }
 
     pub fn horizontal_alignment(mut self,align:AlignItems)->Self{
-        match self.element.direction{
+        match self.element.flex_direction{
             FlexDirection::Row => {
                 self.element.main_axis_alignment = align;
             },
@@ -169,7 +168,7 @@ where
     
     pub fn vertical_alignment(mut self,align:AlignItems)->Self{
         // self.vertical_alignment = align;
-        match self.element.direction{
+        match self.element.flex_direction{
             FlexDirection::Row => {
                 self.element.cors_axis_alignment = align;
             },
@@ -209,8 +208,8 @@ where
         (size.x, size.y)
     }
 
-    fn is_ready(&self) -> bool {
-        self.element.is_ready()
+    fn get_ready(&self) -> bool {
+        self.element.get_ready()
     }
 
     fn set_ready(&mut self) {
@@ -225,8 +224,8 @@ where
         self.element.update_render_state(cursor, origin);
     }
 
-    fn exc(&mut self, context: &mut RwLockWriteGuard<MemState>) {
-        self.element.exc(context);
+    fn execute(&mut self, context: &mut RwLockWriteGuard<MemState>) {
+        self.element.execute(context);
     }
 
     fn get_z_order(&self) -> i32 {
@@ -238,7 +237,7 @@ where
         self.get_z_order()
     }
     
-    fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>> {
+    fn children(&self) -> Option<Vec<Box<dyn UIElement>>> {
         let mut children = Vec::new();
         self.children.foreach_view(&mut |child| {
             children.push(child);
@@ -246,8 +245,8 @@ where
         children.into()
     }
 
-    fn get_input_state(&mut self)-> UIMouseState {
-        self.element.get_input_state()
+    fn get_action_state(&mut self)-> UIMouseState {
+        self.element.get_action_state()
     }
 
     fn set_action_state(&mut self, state: UIMouseState) {

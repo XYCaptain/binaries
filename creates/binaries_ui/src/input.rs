@@ -1,4 +1,4 @@
-use bevy::{ input::{keyboard::KeyboardInput, mouse::{MouseButtonInput, MouseMotion}, ButtonState}, log::info, math::{Vec2, Vec3}, prelude::{Commands, EventReader, KeyCode, MouseButton, Query, Res, ResMut, With}, time::Time, window::{CursorMoved, PrimaryWindow, Window}};
+use bevy::{ input::{keyboard::KeyboardInput, mouse::{MouseButtonInput, MouseMotion}, ButtonState}, log::info, math::{Vec2, Vec3}, prelude::{Commands, EventReader, KeyCode, MouseButton, ResMut}, window::CursorMoved};
 use bevy_vector_shapes::prelude::ShapePainter;
 
 use crate::{components::UIMouseState, layout::UILayouts, Config};

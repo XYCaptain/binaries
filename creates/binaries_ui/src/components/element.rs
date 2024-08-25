@@ -4,8 +4,8 @@ use super::{UIMouseState, UIRenderMode};
 use crate::context::MemState;
 use crate::shape::ShapeTrait;
 use crate::traits::UIElement;
-use bevy::color::palettes::css::{BLACK, BLUE_VIOLET};
-use bevy::math::{Quat, Vec3, Vec3Swizzles, Vec4, VectorSpace};
+use bevy::color::palettes::css::BLUE_VIOLET;
+use bevy::math::{Quat, Vec3, Vec4, VectorSpace};
 use bevy::{color::Srgba, math::Vec2};
 use bevy_vector_shapes::prelude::ShapePainter;
 use bevy_vector_shapes::shapes::RectPainter;
@@ -41,8 +41,7 @@ pub enum AlignItems {
 }
 
 pub(crate) type Drawfunc = Arc<dyn Fn(&mut Element) + Send + Sync + 'static>;
-pub(crate) type Callback =
-    Arc<dyn Fn(&mut Element, &mut RwLockWriteGuard<MemState>) + Send + Sync + 'static>;
+pub(crate) type Callback = Arc<dyn Fn(&mut Element, &mut RwLockWriteGuard<MemState>) + Send + Sync + 'static>;
 pub(crate) type Renderback = Arc<dyn Fn(&mut ShapePainter) + Send + Sync + 'static>;
 pub(crate) type Shape = Arc<RwLock<dyn ShapeTrait>>;
 
@@ -69,6 +68,7 @@ impl Default for RenderAction {
     }
 }
 
+#[allow(dead_code)]
 impl RenderAction {
     fn empty() -> Self {
         Self {
@@ -102,14 +102,13 @@ pub struct Element {
     background_color: Srgba,
     round: Vec4,
     layout_size: Vec2,
+    pub(crate) layout_anchor: Vec3,
     pub(crate) content_size: Vec2,
     action_state: UIMouseState,
     render_state: UIMouseState,
     render_block: UIRenderMode,
-    pub(crate) layout_position: Vec3,
-    pub position_offset: Vec3,
+    pub anchor_offset: Vec3,
     pub rubber_offset: Vec3,
-    isready: bool,
     margin: Vec4,
     padding: Vec4,
     pub(crate) shape: Option<Shape>,
@@ -117,13 +116,14 @@ pub struct Element {
     render: RenderAction,
     drawfn: Option<Drawfunc>,
     draw: Option<Callback>,
-    pub(crate) direction: FlexDirection,
+    pub(crate) flex_direction: FlexDirection,
     pub(crate) main_axis_alignment: AlignItems,
     pub(crate) cors_axis_alignment: AlignItems,
     pub(crate) self_main_axis_alignment: AlignItems,
     pub(crate) self_cors_axis_alignment: AlignItems,
     element_type: ElementType,
-    drag_enable: bool
+    drag_enable: bool,
+    isready: bool,
 }
 
 impl Element {
@@ -135,9 +135,9 @@ impl Element {
             background_color: Srgba::ZERO,
             round: Vec4::ZERO,
             layout_size: Vec2::ZERO,
+            layout_anchor: Vec3::ZERO,
             content_size: Vec2::ZERO,
-            layout_position: Vec3::ZERO,
-            position_offset: Vec3::ZERO,
+            anchor_offset: Vec3::ZERO,
             rubber_offset: Vec3::ZERO,
             action_state: UIMouseState::Release,
             isready: false,
@@ -149,7 +149,7 @@ impl Element {
             margin: Vec4::ZERO,
             padding: Vec4::ZERO,
             zorder: 1,
-            direction: FlexDirection::Row,
+            flex_direction: FlexDirection::Row,
             render_state: UIMouseState::Release,
             render_block: UIRenderMode::Individual,
             main_axis_alignment: AlignItems::Start,
@@ -162,10 +162,10 @@ impl Element {
     }
 
     pub fn insection(&self, point: Vec2) -> bool {
-        let left = self.layout_position.x - self.layout_size.x / 2.;
-        let right = self.layout_position.x + self.layout_size.x / 2.;
-        let top = -self.layout_position.y + self.layout_size.y / 2.;
-        let down = -self.layout_position.y - self.layout_size.y / 2.;
+        let left = self.layout_anchor.x - self.layout_size.x / 2.;
+        let right = self.layout_anchor.x + self.layout_size.x / 2.;
+        let top = -self.layout_anchor.y + self.layout_size.y / 2.;
+        let down = -self.layout_anchor.y - self.layout_size.y / 2.;
 
         if point.x > left
             && point.x < right
@@ -178,7 +178,7 @@ impl Element {
         }
 
         if let Some(shape) = self.shape.clone() {
-            return shape.write().unwrap().hits(Vec2::new(point.x - self.layout_position.x, point.y + self.layout_position.y));
+            return shape.write().unwrap().hits(Vec2::new(point.x - self.layout_anchor.x, point.y + self.layout_anchor.y));
         }
 
         return false;
@@ -251,7 +251,7 @@ impl Element {
     }
 
     pub fn direction(mut self, direction: FlexDirection) -> Self {
-        self.direction = direction;
+        self.flex_direction = direction;
         self
     }
 
@@ -261,7 +261,7 @@ impl Element {
     }
 
     pub fn offset(mut self, offset: Vec3) -> Self {
-        self.position_offset = offset;
+        self.anchor_offset = offset;
         self
     }
 
@@ -281,12 +281,12 @@ impl Element {
     }
 
     pub fn set_position(mut self, pos: Vec3) -> Self {
-        self.layout_position = pos;
+        self.layout_anchor = pos;
         self
     }
 
     pub fn horizontal_alignment(mut self, align: AlignItems) -> Self {
-        match self.direction {
+        match self.flex_direction {
             FlexDirection::Row => {
                 self.main_axis_alignment = align;
             }
@@ -304,7 +304,7 @@ impl Element {
     }
 
     pub fn vertical_alignment(mut self, align: AlignItems) -> Self {
-        match self.direction {
+        match self.flex_direction {
             FlexDirection::Row => {
                 self.cors_axis_alignment = align;
             }
@@ -322,7 +322,7 @@ impl Element {
     }
 
     pub fn self_horizontal_alignment(mut self, align: AlignItems) -> Self {
-        match self.direction {
+        match self.flex_direction {
             FlexDirection::Row => {
                 self.self_main_axis_alignment = align;
             }
@@ -340,7 +340,7 @@ impl Element {
     }
 
     pub fn self_vertical_alignment(mut self, align: AlignItems) -> Self {
-        match self.direction {
+        match self.flex_direction {
             FlexDirection::Row => {
                 self.self_cors_axis_alignment = align;
             }
@@ -406,7 +406,7 @@ impl UIElement for Element {
             }
         }
 
-        painter.set_translation(self.layout_position);
+        painter.set_translation(self.layout_anchor);
         if let Some(shape) = self.shape.as_ref() {
             shape.read().unwrap().draw(painter);
         }
@@ -434,7 +434,7 @@ impl UIElement for Element {
         painter.set_rotation(Quat::IDENTITY);
     }
 
-    fn exc(&mut self, context: &mut RwLockWriteGuard<MemState>) {
+    fn execute(&mut self, context: &mut RwLockWriteGuard<MemState>) {
         match self.action_state {
             UIMouseState::Hover | UIMouseState::Pressed | UIMouseState::Release => {
                 if let Some(action) = self.action.hover.clone() {
@@ -476,7 +476,7 @@ impl UIElement for Element {
                 top: length(self.padding.y),
                 bottom: length(self.padding.w),
             },
-            flex_direction: match self.direction {
+            flex_direction: match self.flex_direction {
                 FlexDirection::Row => taffy::FlexDirection::Row,
                 FlexDirection::Column => taffy::FlexDirection::Column,
                 FlexDirection::RowReverse => taffy::FlexDirection::RowReverse,
@@ -557,7 +557,7 @@ impl UIElement for Element {
         (self.layout_size.x, self.layout_size.y)
     }
 
-    fn is_ready(&self) -> bool {
+    fn get_ready(&self) -> bool {
         self.isready
     }
 
@@ -576,16 +576,16 @@ impl UIElement for Element {
                 self.drag(cxt.drag_delta.1 - cxt.drag_delta.0);
             }
             else if self.action_state == UIMouseState::Release {
-                self.position_offset += self.rubber_offset;
+                self.anchor_offset += self.rubber_offset;
                 self.rubber_offset = Vec3::ZERO;
             }
         }
 
-        self.layout_position = bevy::prelude::Vec3::new(
+        self.layout_anchor = bevy::prelude::Vec3::new(
             origin.x + layout.location.x + self.layout_size.x / 2. + inherit_origin.x,
             origin.y - self.layout_size.y / 2. - layout.location.y - inherit_origin.y,
             0.,
-        ) + self.position_offset + self.rubber_offset;
+        ) + self.anchor_offset + self.rubber_offset;
     }
 
     /// update position and insection state
@@ -621,11 +621,11 @@ impl UIElement for Element {
         self.zorder
     }
 
-    fn get_children(&self) -> Option<Vec<Box<dyn UIElement>>> {
+    fn children(&self) -> Option<Vec<Box<dyn UIElement>>> {
         None
     }
 
-    fn get_input_state(&mut self) -> UIMouseState {
+    fn get_action_state(&mut self) -> UIMouseState {
         self.action_state.clone()
     }
 

@@ -1,5 +1,5 @@
 use tokio::runtime::Runtime;
-use tonbo::{executor::tokio::TokioExecutor, tonbo_record, Projection, DB};
+use tonbo::{executor::tokio::TokioExecutor, tonbo_record, DB};
 use bevy::{app::App, prelude::{Plugin, Resource}};
 
 #[tonbo_record]
@@ -10,7 +10,7 @@ pub struct Node {
     pub offset_x: i32,
     pub offset_y: i32
 }
-
+#[allow(dead_code)]
 #[derive(Resource)]
 pub struct LocalStorage(DB<Node,TokioExecutor>);
 

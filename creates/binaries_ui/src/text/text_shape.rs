@@ -1,5 +1,5 @@
-use bevy::{math::{Vec2, Vec3}, prelude::{Mesh, Transform}, render::render_asset::RenderAssetUsages};
-use lyon::{path::FillRule, tessellation::{BuffersBuilder, FillOptions, FillTessellator, StrokeTessellator, VertexBuffers}};
+use bevy::{math::Vec2, prelude::Mesh, render::render_asset::RenderAssetUsages};
+use lyon::{path::FillRule, tessellation::{BuffersBuilder, FillOptions, FillTessellator, VertexBuffers}};
 use rusttype::{Font, Point, Rect, Scale};
 use svg::node::element::Path;
 

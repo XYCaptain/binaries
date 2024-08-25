@@ -1,10 +1,11 @@
 
-use bevy::{color::Srgba, math::{Vec4, VectorSpace}};
+use bevy::{color::Srgba, math::VectorSpace};
 use element::Element;
 
 pub mod element;
 pub mod stacks;
 pub mod element_set;
+pub mod binding;
 
 #[derive(Clone,PartialEq,Debug,Copy)]
 pub enum UIMouseState {
